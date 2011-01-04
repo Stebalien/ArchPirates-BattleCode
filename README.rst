@@ -1,9 +1,13 @@
 This repo contains a list of Battlecode players, including the prime player, archpirates.
 
 
-archpirates:
+Players
+=======
+archpirates
+-----------
     Main submission, no additions yet
 
 
-examplefuncsplayer:
+examplefuncsplayer
+------------------
     Default player included in the initial install

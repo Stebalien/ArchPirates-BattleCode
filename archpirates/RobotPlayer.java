@@ -30,11 +30,11 @@ public class RobotPlayer implements Runnable {
             try {
 				myRC.yield();
 
-				if(!motor.canMove(myRC.getDirection()))
+				if(!motor.canMove(myRC.getDirection())) {
 					motor.setDirection(myRC.getDirection().rotateRight());
-				else if(myRC.getTeamResources()>=2*Chassis.LIGHT.cost)
+                } else if(myRC.getTeamResources() >= 2*Chassis.LIGHT.cost) {
 					builder.build(Chassis.LIGHT,myRC.getLocation().add(myRC.getDirection()));
-
+                }
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
