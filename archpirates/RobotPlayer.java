@@ -6,15 +6,26 @@ import static battlecode.common.GameConstants.*;
 public class RobotPlayer implements Runnable {
 
 	private final RobotController myRC;
+    private final Archbot myBot;
 
     public RobotPlayer(RobotController rc) {
         myRC = rc;
     }
 
 	public void run() {
-		ComponentController [] components = myRC.newComponents();
-		System.out.println(java.util.Arrays.toString(components));
-		System.out.flush();
+		ComponentController [] = myRC.newComponents();
+        //DEBUG
+		//System.out.println(java.util.Arrays.toString(components));
+		//System.out.flush();
+        switch(myRC.getChassis()) {
+            case Chassis.BUILDING:
+                myBot = new Building(myRC);
+                break;
+            default:
+                myBot = new Archbot(myRC);
+                break;
+        }
+        myBot.init()
 		if(myRC.getChassis()==Chassis.BUILDING)
 			runBuilder((MovementController)components[0],(BuilderController)components[2]);
 		else
@@ -51,6 +62,7 @@ public class RobotPlayer implements Runnable {
                 }
 
                 if (motor.canMove(myRC.getDirection())) {
+                    //DEBUG
                     //System.out.println("about to move");
                     motor.moveForward();
                 } else {
