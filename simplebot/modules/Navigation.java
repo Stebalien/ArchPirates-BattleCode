@@ -49,7 +49,8 @@ public class Navigation {
             return;
 
         MapLocation loc = robot.getLocation();
-
+        // Likewise, if the robot is already at its destination,
+        // signal finish
         if(loc.equals(bnav_lastDest)) {
             bnav_lastDest = null;
             bnav_lastDist = 0;
@@ -76,7 +77,6 @@ public class Navigation {
             }
         } else {
             // Sample, do a right-hand follow, escaping when robot faces target
-
             // scan left to right for open directions:
             Direction scan = cur.rotateLeft();
             Direction test = scan.rotateLeft();

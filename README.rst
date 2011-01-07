@@ -8,6 +8,10 @@ archpirates
     Main submission, no additions yet
 
 
+simplebot
+---------
+    Player including navigation software, still in testing
+
 examplefuncsplayer
 ------------------
     Default player included in the initial install
