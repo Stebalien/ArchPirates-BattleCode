@@ -51,13 +51,13 @@ public class RobotPlayer implements Runnable {
 	}
 
     public void runMotor() {
-        MapLocation goal = myRC.getLocation().add(Direction.SOUTH, 24);
+        nav.setDestination(myRC.getLocation().add(Direction.SOUTH, 40).add(Direction.EAST, 10));
 
         while (true) {
             try {
                 /*** beginning of main loop ***/
 
-                nav.bugNavigate(goal);
+                nav.bugNavigate();
 
                 /*** end of main loop ***/
             } catch (Exception e) {
@@ -65,6 +65,7 @@ public class RobotPlayer implements Runnable {
                 e.printStackTrace();
             }
 
+            System.out.println(Clock.getBytecodeNum());
             myRC.yield();
         }
     }

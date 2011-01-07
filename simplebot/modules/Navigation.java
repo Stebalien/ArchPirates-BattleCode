@@ -13,6 +13,8 @@ public class Navigation {
 
     private int bnav_lastDist;
     private MapLocation bnav_lastDest;
+    private int wfTurned;
+    private boolean right;
 
     /**
      * Instantiates a Navigation object
@@ -40,21 +42,22 @@ public class Navigation {
      *
      * @param motor the motor object for the robot
      * @param sensor the sensor used to view the map
+     * @return false if there is a destination that hasn't been reached, true otherwise
      */
-    public void bugNavigate() {
+    public boolean bugNavigate() {
         // If the motor is cooling down, don't bother navigating
         // Also return if no destination is set
         // Some precomputation might be useful eventually
         if(motor.isActive() || bnav_lastDest == null)
-            return;
+            return true;
 
-        MapLocation loc = robot.getLocation();
         // Likewise, if the robot is already at its destination,
         // signal finish
+        MapLocation loc = robot.getLocation();
         if(loc.equals(bnav_lastDest)) {
             bnav_lastDest = null;
             bnav_lastDist = 0;
-            return;
+            return true;
         }
 
         Direction d = loc.directionTo(bnav_lastDest);
@@ -64,51 +67,79 @@ public class Navigation {
         if(bnav_lastDist == 0) {
             // Try navigating towards the goal
             if(d == cur) {
-                if(robot.senseTerrainTile(loc.add(d)) == TerrainTile.LAND) {
-                    if(motor.canMove(d))
-                        motor.moveForward();
+                if(motor.canMove(d)) {
+                    motor.moveForward();
                 } else {
                     // Hit a wall, begin wall following
                     bnav_lastDist = loc.distanceSquaredTo(bnav_lastDest);
                     motor.setDirection(d.rotateRight().rotateRight());
+                    right = true;
                 }
             } else {
                 motor.setDirection(d);
             }
         } else {
             // Sample, do a right-hand follow, escaping when robot faces target
-            // scan left to right for open directions:
-            Direction scan = cur.rotateLeft();
-            Direction test = scan.rotateLeft();
+            // Switches directions if the robot travels too far away from the
+            // destination
 
-            while(scan != test) {
-                if(robot.senseTerrainTile(loc.add(scan)) == TerrainTile.LAND)
-                    break;
-                scan = scan.rotateRight();
+            int dist = loc.distanceSquaredTo(bnav_lastDest);
+            if(right && dist > bnav_lastDist*2) {
+                right = false;
+                motor.setDirection(cur.opposite());
+                return false;
             }
 
-            if(robot.senseTerrainTile(loc.add(d)) == TerrainTile.LAND && loc.distanceSquaredTo(bnav_lastDest) < bnav_lastDist) {
+
+            // scan left to right for open directions:
+            Direction scan, test;
+            if(right) {
+                scan = cur.rotateLeft();
+                test = scan.rotateLeft();
+            } else {
+                scan = cur.rotateRight();
+                test = scan.rotateRight();
+            }
+
+            while(scan != test) {
+                if(motor.canMove(scan))
+                    break;
+                if(right)
+                    scan = scan.rotateRight();
+                else
+                    scan = scan.rotateLeft();
+            }
+
+            if(scan == test || (motor.canMove(d) && dist < bnav_lastDist)) {
                 bnav_lastDist = 0;
                 scan = d;
             }
 
+            // Movement code, based on goal direction
             // If the open square is forward, move forward, otherwise turn
             if(scan == cur) {
                 // Check square leading to destination, if that is free, take it and
                 // stop wall following
-
                 if(motor.canMove(cur)) {
                     motor.moveForward();
-                } else {
-                    // TODO: Something is blocking our way
+                    wfTurned = 0;
                 }
             } else {
-                motor.setDirection(scan);
+                if(wfTurned > 1) {
+                    motor.setDirection(d);
+                    bnav_lastDist = 0;
+                    wfTurned = 0;
+                } else {
+                    motor.setDirection(scan);
+                    wfTurned++;
+                }
             }
         }
             } catch(Exception e) {
                 // Do nothing at the moment
             }
+
+        return false;
     }
 
     /**
@@ -119,14 +150,11 @@ public class Navigation {
      *
      * @see simplebot.RobotPlayer#navigate(MovementController)
      */
-    public void bugNavigate(MapLocation loc) {
+    public void setDestination(MapLocation loc) {
         // restart if this is a new destination
-        if(bnav_lastDest == null || !loc.equals(bnav_lastDest)) {
+        if(!loc.equals(bnav_lastDest)) {
             bnav_lastDist = 0;
             bnav_lastDest = loc;
         }
-
-        // start navigation
-        bugNavigate();
     }
 }
