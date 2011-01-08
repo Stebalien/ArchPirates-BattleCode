@@ -3,6 +3,7 @@ package archpirates;
 import archpirates.modules.RobotProperties;
 import archpirates.modules.Attack;
 import archpirates.modules.Targeter;
+import archpirates.modules.Builder;
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
