@@ -4,6 +4,7 @@ import archpirates.modules.RobotProperties;
 import archpirates.modules.Attack;
 import archpirates.modules.Targeter;
 import archpirates.modules.Builder;
+import archpirates.modules.TaskState;
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
@@ -40,32 +41,37 @@ public class RobotPlayer implements Runnable {
 
 
 	public void runBuilder() {
-        MovementController motor = properties.motor;
-        BuilderController builder = properties.builder;
-        MapLocation myLoc = myRC.getLocation();
-		while (true) {
+        Builder builder = new Builder(properties);
+        Direction buildDirection = null;
+        TaskState state = TaskState.NONE;
+        int TOTAL = 3;
+        int num_built = 0;
+
+		while (num_built < TOTAL) {
             try {
-                // Only build when I can
-				while (!motor.canMove(myRC.getDirection())) {
-                    motor.setDirection(myRC.getDirection().rotateRight());
-                    myRC.yield();
+                switch (state) {
+                    case NONE:
+                        System.out.println("START");
+                        state = builder.startBuild(Chassis.LIGHT, new ComponentType [] {ComponentType.SMG, ComponentType.RADAR});
+                        break;
+                    case WAITING:
+                        System.out.println("WAIT");
+                        state = builder.doBuild();
+                        break;
+                    case ACTIVE:
+                        System.out.println("BUILD");
+                        state = builder.doBuild();
+                        break;
+                    case FAIL:
+                        System.out.println("FAIL");
+                        state = TaskState.NONE;
+                        break;
+                    case DONE:
+                        state = TaskState.NONE;
+                        num_built++;
+                        System.out.println("DONE");
+                        break;
                 }
-                MapLocation loc = myLoc.add(myRC.getDirection());
-                //Build Chassis
-                while (myRC.getTeamResources() < 2*Chassis.LIGHT.cost) myRC.yield();
-                builder.build(Chassis.LIGHT, loc);
-                myRC.yield();
-
-                while (myRC.getTeamResources() < 2*ComponentType.SMG.cost) myRC.yield();
-                builder.build(ComponentType.SMG, loc, RobotLevel.ON_GROUND);
-                myRC.yield();
-
-                while (myRC.getTeamResources() < 2*ComponentType.RADAR.cost) myRC.yield();
-                builder.build(ComponentType.RADAR, loc, RobotLevel.ON_GROUND);
-                //myRC.yield();
-
-                // Turn it on
-                myRC.turnOn(loc, RobotLevel.ON_GROUND);
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
@@ -76,12 +82,12 @@ public class RobotPlayer implements Runnable {
 
     public void runKiller() {
         Attack attacker = new Attack(properties);
-        Targeter targeter = new Targeter(properties, properties.myTeam, Chassis.LIGHT);
+        Targeter targeter = new Targeter(properties, properties.opTeam, Chassis.LIGHT);
         while (true) {
             try {
                 //DEBUG
                 int start = Clock.getBytecodeNum();
-                attacker.fireGunsOn(targeter);
+                attacker.autoFire(targeter);
                 //DEBUG
                 System.out.println("Bytes:" + (Clock.getBytecodeNum()-start));
                 myRC.yield();
