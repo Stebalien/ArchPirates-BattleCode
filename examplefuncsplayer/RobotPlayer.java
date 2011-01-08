@@ -36,8 +36,6 @@ public class RobotPlayer implements Runnable {
 					builder.build(Chassis.LIGHT,myRC.getLocation().add(myRC.getDirection()));
 
             } catch (Exception e) {
-                System.out.println("caught exception:");
-                e.printStackTrace();
             }
         }
 	}
