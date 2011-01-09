@@ -56,12 +56,51 @@ public class Targeter {
         this.myRC = properties.myRC;
         this.chassis = chassis;
     }
+    
 
-    private boolean isCached(ComponentController component) {
+    /**
+     * Set the chassis that this targeter targets.
+     * 
+     * @param chassis The chassis.
+     */
+    public void setChassis(Chassis chassis) {
+        if (robotInfo != null && robotInfo.chassis != chassis)
+            robotInfo = null;
+        this.chassis = chassis;
+    }
+
+    /**
+     * Updates the cache.
+     *
+     * @return True if the cache is valid.
+     */
+    private boolean updateCache() {
         if (round != (round = Clock.getRoundNum())) { 
             if (robotInfo != null 
-                && chassis == robotInfo.chassis 
                 && sensor.canSenseObject(robotInfo.robot))
+            {
+                try {
+                    robotInfo = sensor.senseRobotInfo(robotInfo.robot);
+                    return true;
+                } catch (GameActionException e) {}
+            }
+            robots = sensor.senseNearbyGameObjects(Robot.class);
+        } else if (robotInfo != null)
+            return true;
+        robotInfo = null;
+        return false;
+    }
+
+    /**
+     * Updates the cache and checks the range of the robot against the range of component.
+     *
+     * @param component The component against which the range will be checked.
+     *
+     * @return True if the cache is valid.
+     */
+    private boolean updateCache(ComponentController component) {
+        if (round != (round = Clock.getRoundNum())) { 
+            if (robotInfo != null && sensor.canSenseObject(robotInfo.robot))
             {
                 try {
                     robotInfo = sensor.senseRobotInfo(robotInfo.robot);
@@ -70,40 +109,37 @@ public class Targeter {
                 } catch (GameActionException e) {}
             }
             robots = sensor.senseNearbyGameObjects(Robot.class);
-        } else if (robotInfo != null
-            && chassis == robotInfo.chassis
-            && component.withinRange(robotInfo.location))
-        {
+        } else if (robotInfo != null && component.withinRange(robotInfo.location))
             return true;
-        }
         robotInfo = null;
         return false;
     }
 
     /**
-     * Find the first robot.
+     * Targets the first robot that it finds.
      *
      * @param component The component that will be firing.
      * @param chassis The chassis to target.
      *
      * @return The RobotInfo of the first robot.
      */
-    public RobotInfo getFirst(ComponentController component, Chassis chassis) {
-        this.chassis = chassis;
-        return getFirst(component);
+    public RobotInfo targetRobot(ComponentController component, Chassis chassis) {
+        setChassis(chassis);
+        return targetRobot(component);
     }
     /**
-     * Find the first robot.
+     * Targets the first robot that it finds.
      *
      * @param component The component that will be firing.
      *
      * @return The RobotInfo of the first robot.
      */
-    public RobotInfo getFirst(ComponentController component) {
+    public RobotInfo targetRobot(ComponentController component) {
 
-        if (isCached(component)) return robotInfo;
+        // Check the cache
+        if (updateCache(component)) return robotInfo;
 
-        // Find one that we want
+        // Find a new target
         for (Robot r : robots) {
             if (team != r.getTeam())
                 continue;
@@ -114,57 +150,113 @@ public class Targeter {
                 {
                     return robotInfo;
                 }
-            } catch (GameActionException e) {}
+            } catch (GameActionException e) {e.printStackTrace();}
         }
         robotInfo = null;
         return null;
     }
 
     /**
-     * Find the nearest robot (SLOW/NO CACHE).
+     * Targets the nearest robot or the previously targeted robot if still in range.
      *
-     * @param range The max range.
+     * @param component The component that will be firing.
+     * @param cycles The max number of robots to loop over.
+     * @param chassis The chassis to target.
+     *
+     * @return The RobotInfo of the first robot.
+     */
+    public RobotInfo targetNearestRobot(ComponentController component, int cycles, Chassis chassis) {
+        setChassis(chassis);
+        return targetNearestRobot(component, cycles);
+    }
+
+    /**
+     * Targets the nearest robot or the previously targeted robot if still in range.
+     *
+     * @param component The component that will be firing.
      * @param cycles The max number of robots to loop over.
      *
      * @return The location of the nearest target.
      */
-    public RobotInfo getNearest(int range, int cycles) {
-        // Setup
-        
-        int nearDistSq = range*range;
+    public RobotInfo targetNearestRobot(ComponentController component, int cycles) {
 
+        // Check the cache
+        if (updateCache(component)) return robotInfo;
+
+        // Setup
+        int nearDistSq = 10000; // Very high number
         MapLocation myLoc = myRC.getLocation();
 
-        //TODO: This should be a private method.
-        int curRound = Clock.getRoundNum();
-        if (curRound != round) { 
-            robotInfo = null;
-            robots = sensor.senseNearbyGameObjects(Robot.class);
-            round = curRound;
-        } else {
-            // Return the cached robotInfo if within range or update cache and continue.
-            if (myLoc.distanceSquaredTo(robotInfo.location) <= nearDistSq) {
-                return robotInfo;
-            } else {
-                robotInfo = null;
-                robots = sensor.senseNearbyGameObjects(Robot.class);
-            }
-        }
-
-        // Find the one that we want
+        // Find a new target
         for (int i = 0; i < ((cycles < robots.length) ? cycles : robots.length); i++) {
             if (team != robots[i].getTeam())
                 continue;
             try {
                 RobotInfo tempRobotInfo = sensor.senseRobotInfo(robots[i]);
-                int distSq;
-                if (tempRobotInfo.chassis == chassis && (distSq = myLoc.distanceSquaredTo(tempRobotInfo.location)) <= nearDistSq) {
-                    robotInfo = tempRobotInfo;
-                    nearDistSq = distSq;
+                // Only check robot if:
+                // 1. The chassis matches
+                // 2. The robot is within range - Must check every time because of the angle restriction.
+                if ((chassis == null || chassis == tempRobotInfo.chassis) && (component.withinRange(tempRobotInfo.location))) {
+                    int distSq = myLoc.distanceSquaredTo(tempRobotInfo.location);
+                    if (distSq < nearDistSq) {
+                        robotInfo = tempRobotInfo;
+                        nearDistSq = distSq;
+                    }
                 }
-            } catch (GameActionException e) {}
+            } catch (GameActionException e) {e.printStackTrace();}
         }
         return robotInfo;
     }
+
+    /**
+     * Targets and follows the first robot it sees.
+     *
+     * @param component The component that will be firing.
+     * @param chassis The chassis we are targeting
+     */
+    /*
+    public RobotInfo chaseRobot(ComponentController component, Chassis chassis) {
+        setChassis(chassis);
+        return chaseFirst(component, navigator);
+    }
+    */
+
+    /**
+     * Targets and follows the first robot it sees.
+     *
+     * @param component The component that will be firing.
+     */
+    /*
+    public RobotInfo chaseRobot(ComponentController component) {
+        // Check cache
+        if (updateCache()) {
+            if (component.withinRange(robotInfo.location))
+                return robotInfo;
+            else {
+                navigator.navigate(robotInfo.location);
+                return null;
+            }
+        }
+
+        // Find a new robot.
+        for (Robot r : robots) {
+            if (team == r.getTeam())
+                continue;
+            try {
+                robotInfo = sensor.senseRobotInfo(r);
+                if (chassis == null || chassis == robotInfo.chassis) {
+                    if (component.withinRange(robotInfo.location))
+                        return robotInfo;
+                    else {
+                        navigator.navigate(robotInfo.location);
+                        return null;
+                    }
+                }
+            } catch (GameActionException e) {e.printStackTrace();}
+            robotInfo = null;
+            return null;
+        }
+    }
+    */
 }
 
