@@ -11,7 +11,8 @@ public class Navigation {
     private RobotController robot;
     private MovementController motor;
 
-    private int bnav_lastDist;
+    private int bnav_lastDist,
+                bnav_targetDist;
     private MapLocation bnav_lastDest;
     private int wfTurned;
     private boolean right;
@@ -49,12 +50,14 @@ public class Navigation {
         // Also return if no destination is set
         // Some precomputation might be useful eventually
         if(motor.isActive() || bnav_lastDest == null)
-            return true;
+            return (bnav_lastDest == null);
 
         // Likewise, if the robot is already at its destination,
         // signal finish
         MapLocation loc = robot.getLocation();
-        if(loc.equals(bnav_lastDest)) {
+        int targetDist = loc.distanceSquaredTo(bnav_lastDest);
+        System.out.println("Distance to target: " + targetDist);
+        if(targetDist <= bnav_targetDist) {
             bnav_lastDest = null;
             bnav_lastDist = 0;
             return true;
@@ -71,7 +74,7 @@ public class Navigation {
                     motor.moveForward();
                 } else {
                     // Hit a wall, begin wall following
-                    bnav_lastDist = loc.distanceSquaredTo(bnav_lastDest);
+                    bnav_lastDist = targetDist;
                     motor.setDirection(d.rotateRight().rotateRight());
                     right = true;
                 }
@@ -83,8 +86,7 @@ public class Navigation {
             // Switches directions if the robot travels too far away from the
             // destination
 
-            int dist = loc.distanceSquaredTo(bnav_lastDest);
-            if(right && dist > bnav_lastDist*2) {
+            if(right && targetDist > bnav_lastDist*2) {
                 right = false;
                 motor.setDirection(cur.opposite());
                 return false;
@@ -110,7 +112,7 @@ public class Navigation {
                     scan = scan.rotateLeft();
             }
 
-            if(scan == test || (motor.canMove(d) && dist < bnav_lastDist)) {
+            if(scan == test || (motor.canMove(d) && targetDist < bnav_lastDist)) {
                 bnav_lastDist = 0;
                 scan = d;
             }
@@ -151,10 +153,95 @@ public class Navigation {
      * @see simplebot.RobotPlayer#navigate(MovementController)
      */
     public void setDestination(MapLocation loc) {
+        setDestination(loc, 0);
+    }
+
+    /**
+     * Navigates towards the given map location, stopping when the robot is the
+     * given distance away.  This restarts the current bug navigation.
+     *
+     * @param motor the motor object for the robot
+     * @param loc the destination location, in absolute coordinates
+     * @param dist the distance away from the location you'd like to stop
+     *
+     * @see simplebot.RobotPlayer#navigate(MovementController)
+     */
+    public void setDestination(MapLocation loc, double dist) {
         // restart if this is a new destination
         if(!loc.equals(bnav_lastDest)) {
             bnav_lastDist = 0;
+            bnav_targetDist = (int)(dist*dist);
             bnav_lastDest = loc;
         }
+    }
+
+    /**
+     * Turn to the given location
+     *
+     * @param d direction to turn
+     */
+    public void setDirection(Direction d) throws GameActionException {
+        if(motor.isActive())
+            return;
+
+        motor.setDirection(d);
+    }
+
+    /**
+     * Rotate the given direction
+     *
+     * @param right turn right if true, left if false
+     * @param mag number of times to turn
+     */
+    public void rotate(boolean right, int mag) throws GameActionException {
+        if(motor.isActive())
+            return;
+
+        Direction d = robot.getDirection();
+        for(int i = 0; i < mag; i++)
+            if(right)
+                d = d.rotateRight();
+            else
+                d = d.rotateLeft();
+
+        motor.setDirection(d);
+    }
+
+    /**
+     * Move the robot forward or backward
+     *
+     * @param forward move forward if true, backward otherwise
+     */
+    public void move(boolean forward) throws GameActionException {
+        if(motor.isActive())
+            return;
+
+        if(forward) {
+            if(motor.canMove(robot.getDirection())) {
+                motor.moveForward();
+            }
+        } else {
+            if(motor.canMove(robot.getDirection().opposite())) {
+                motor.moveBackward();
+            }
+        }
+    }
+
+    /**
+     * Tests if the robot can move forward, wraps around MovementController
+     *
+     * @return true if the robot can move forward, false otherwise
+     */
+    public boolean canMoveForward() {
+        return motor.canMove(robot.getDirection());
+    }
+
+    /**
+     * Tests if the robot can move backward, wraps around MovementController
+     *
+     * @return true if the robot can move backward, false otherwise
+     */
+    public boolean canMoveBackward() {
+        return motor.canMove(robot.getDirection().opposite());
     }
 }
