@@ -4,8 +4,6 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 public class Attack {
 	private final RobotController myRC;
-    private final Team myTeam;
-    private final Team opTeam;
     private final WeaponController [] guns;
     private final WeaponController [] beams;
 
@@ -15,8 +13,6 @@ public class Attack {
      * @param properties The properties of the controlling robot.
      */
     public Attack(RobotProperties properties) {
-        this.myTeam = properties.myTeam;
-        this.opTeam = properties.opTeam;
         this.myRC = properties.myRC;
         this.guns = properties.guns;
         this.beams = properties.beams;
@@ -48,9 +44,11 @@ public class Attack {
      * Fire all guns on targets.
      *
      * @param targeter The targeter.
+     *
+     * @return True if a gun was fired.
      */
-    public void fireGunsOn(Targeter targeter) {
-        fireGunsOn(targeter, guns); 
+    public boolean autoFire(Targeter targeter) {
+        return autoFire(targeter, guns); 
     }
 
     /**
@@ -59,22 +57,29 @@ public class Attack {
      *
      * @param targeter The targeter.
      * @param guns All of the guns to fire.
+     *
+     * @return True if a gun was fired.
      */
-    public void fireGunsOn(Targeter targeter, WeaponController [] guns) {
+    public boolean autoFire(Targeter targeter, WeaponController [] guns) {
         RobotInfo info = null;
         ComponentType type = null;
+        boolean active = false;
         for (WeaponController gun : guns) {
             // TODO: Group weapons better.
             if (!gun.isActive()) {
                 if (type != (type = gun.type()))
-                    info = targeter.getFirst(gun);
+                    info = targeter.targetRobot(gun);
                 if (info == null)
                     continue;
                 try {
                     gun.attackSquare(info.location, info.robot.getRobotLevel());
+                    active = true;
                 } catch(GameActionException e) {e.printStackTrace();}
+            } else {
+                active = true;
             }
         }
+        return active;
     }
 
     /**
@@ -82,24 +87,19 @@ public class Attack {
      *
      * @param targeter The targeter.
      * @param gun The gun.
+     *
+     * @return True if a gun was fired.
      */
-    public void fireGunOn(Targeter targeter, WeaponController gun) {
-        if (gun.isActive()) return;
+    public boolean autoFire(Targeter targeter, WeaponController gun) {
+        if (gun.isActive()) return true;
 
-        RobotInfo info = targeter.getFirst(gun);
+        RobotInfo info = targeter.targetRobot(gun);
         if (info != null) {
             try {
                 gun.attackSquare(info.location, info.robot.getRobotLevel());
-            } catch(GameActionException e) {}
+                return true;
+            } catch(GameActionException e) {e.printStackTrace();}
         }
-    }
-    public void autoFire() {
-        autoFire(beams, guns);
-    }
-    public void autoFire(WeaponController [] beams, WeaponController [] guns) {
-        // Impliment automatic targeting based on weapon here.
-        // Should use subfunctions for indevidual weapons types.
-        // SMG -> light
-        // Beam -> Buildings (+MINES+)
+        return false;
     }
 }
