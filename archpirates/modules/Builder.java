@@ -25,16 +25,10 @@ public class Builder {
         myRC = properties.myRC;
     }
 
-    public TaskState startBuild(Chassis chassis, ComponentType [] components) {
-        return startBuild(chassis, components, null);
+    public TaskState startBuild(Chassis chassis, ComponentType... components) {
+        return startBuild(chassis, null, components);
     }
-    public TaskState startBuild(Chassis chassis) {
-        return startBuild(chassis, new ComponentType [] {}, null);
-    }
-    public TaskState startBuild(Chassis chassis, Direction direction) {
-        return startBuild(chassis, new ComponentType [] {}, direction);
-    }
-    public TaskState startBuild(Chassis chassis, ComponentType [] components, Direction direction) {
+    public TaskState startBuild(Chassis chassis, Direction direction, ComponentType... components) {
         this.chassis = chassis;
         this.direction = direction;
         this.level = chassis.level;

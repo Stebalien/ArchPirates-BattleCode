@@ -1,4 +1,6 @@
-package simplebot.modules;
+package archpirates.modules;
+
+import archpirates.modules.RobotProperties;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -8,8 +10,9 @@ import static battlecode.common.GameConstants.*;
  * pathfinding.
  */
 public class Navigation {
-    private RobotController robot;
-    private MovementController motor;
+    private final RobotController myRC;
+    private final RobotProperties myRP;
+    private final MovementController motor;
 
     private int bnav_lastDist,
                 bnav_targetDist;
@@ -23,9 +26,10 @@ public class Navigation {
      * @param robot the robot this navigator controls, used to get current location
      * @parm motor the controlle for the motor of this robot
      */
-    public Navigation(RobotController robot, MovementController motor) {
-        this.robot = robot;
-        this.motor = motor;
+    public Navigation(RobotProperties rp) {
+        this.myRC = rp.myRC;
+        this.myRP = rp;
+        this.motor = rp.motor;
     }
 
     /**
@@ -54,7 +58,7 @@ public class Navigation {
 
         // Likewise, if the robot is already at its destination,
         // signal finish
-        MapLocation loc = robot.getLocation();
+        MapLocation loc = myRC.getLocation();
         int targetDist = loc.distanceSquaredTo(bnav_lastDest);
         System.out.println("Distance to target: " + targetDist);
         if(targetDist <= bnav_targetDist) {
@@ -64,7 +68,7 @@ public class Navigation {
         }
 
         Direction d = loc.directionTo(bnav_lastDest);
-        Direction cur = robot.getDirection();
+        Direction cur = myRC.getDirection();
 
             try {
         if(bnav_lastDist == 0) {
@@ -112,7 +116,7 @@ public class Navigation {
                     scan = scan.rotateLeft();
             }
 
-            if(scan == test || (motor.canMove(d) && targetDist < bnav_lastDist)) {
+            if(scan == test || (motor.canMove(d) && targetDist <= bnav_lastDist)) {
                 bnav_lastDist = 0;
                 scan = d;
             }
@@ -169,7 +173,7 @@ public class Navigation {
     public void setDestination(MapLocation loc, double dist) {
         // restart if this is a new destination
         if(!loc.equals(bnav_lastDest)) {
-            bnav_lastDist = 0;
+            bnav_lastDist = myRC.getLocation().distanceSquaredTo(loc);
             bnav_targetDist = (int)(dist*dist);
             bnav_lastDest = loc;
         }
@@ -197,7 +201,7 @@ public class Navigation {
         if(motor.isActive())
             return;
 
-        Direction d = robot.getDirection();
+        Direction d = myRC.getDirection();
         for(int i = 0; i < mag; i++)
             if(right)
                 d = d.rotateRight();
@@ -217,11 +221,11 @@ public class Navigation {
             return;
 
         if(forward) {
-            if(motor.canMove(robot.getDirection())) {
+            if(motor.canMove(myRC.getDirection())) {
                 motor.moveForward();
             }
         } else {
-            if(motor.canMove(robot.getDirection().opposite())) {
+            if(motor.canMove(myRC.getDirection().opposite())) {
                 motor.moveBackward();
             }
         }
@@ -233,7 +237,7 @@ public class Navigation {
      * @return true if the robot can move forward, false otherwise
      */
     public boolean canMoveForward() {
-        return motor.canMove(robot.getDirection());
+        return motor.canMove(myRC.getDirection());
     }
 
     /**
@@ -242,6 +246,6 @@ public class Navigation {
      * @return true if the robot can move backward, false otherwise
      */
     public boolean canMoveBackward() {
-        return motor.canMove(robot.getDirection().opposite());
+        return motor.canMove(myRC.getDirection().opposite());
     }
 }

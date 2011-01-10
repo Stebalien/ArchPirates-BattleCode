@@ -102,4 +102,26 @@ public class Attack {
         }
         return false;
     }
+
+    public boolean pursue(Targeter targeter, Navigation nav) {
+        RobotInfo info = null;
+        ComponentType type = null;
+        boolean active = false;
+        for (WeaponController gun : guns) {
+            // TODO: Group weapons better.
+            if (!gun.isActive()) {
+                if (type != (type = gun.type()))
+                    info = targeter.chaseRobot(gun, nav);
+                if (info == null)
+                    continue;
+                try {
+                    gun.attackSquare(info.location, info.robot.getRobotLevel());
+                    active = true;
+                } catch(GameActionException e) {e.printStackTrace();}
+            } else {
+                active = true;
+            }
+        }
+        return active;
+    }
 }

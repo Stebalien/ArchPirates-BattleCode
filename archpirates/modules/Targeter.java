@@ -6,6 +6,7 @@ public class Targeter {
     private final SensorController sensor;
 	private final RobotController myRC;
 	private final Team team;
+    private final RobotProperties myRP;
 
     // cache
     private Robot [] robots;
@@ -17,43 +18,44 @@ public class Targeter {
     /**
      * Target a robot.
      *
-     * @param properties The properties object describing the current robot.
+     * @param rp The properties object describing the current robot.
      */
-    public Targeter(RobotProperties properties) {
-        this(properties, properties.opTeam, null);
+    public Targeter(RobotProperties rp) {
+        this(rp, rp.opTeam, null);
     }
 
     /**
      * Target a robot.
      *
-     * @param properties The properties object describing the current robot.
+     * @param rp The properties object describing the current robot.
      * @param chassis The team that the robot is on.
      */
-    public Targeter(RobotProperties properties, Chassis chassis) {
-        this(properties, properties.opTeam, chassis);
+    public Targeter(RobotProperties rp, Chassis chassis) {
+        this(rp, rp.opTeam, chassis);
     }
 
     /**
      * Target a robot.
      *
-     * @param properties The properties object describing the current robot.
+     * @param rp The properties object describing the current robot.
      * @param team The team that the robot is on.
      */
-    public Targeter(RobotProperties properties, Team team) {
-        this(properties, team, null);
+    public Targeter(RobotProperties rp, Team team) {
+        this(rp, team, null);
     }
 
     /**
      * Target a robot.
      *
-     * @param properties The properties object describing the current robot.
+     * @param rp The properties object describing the current robot.
      * @param team The team that the robot is on.
      * @param chassis The chassis to target.
      */
-    public Targeter(RobotProperties properties, Team team, Chassis chassis) {
-        this.sensor = properties.sensor;
+    public Targeter(RobotProperties rp, Team team, Chassis chassis) {
+        this.myRP = rp;
+        this.sensor = rp.sensor;
         this.team = team;
-        this.myRC = properties.myRC;
+        this.myRC = rp.myRC;
         this.chassis = chassis;
     }
     
@@ -214,49 +216,56 @@ public class Targeter {
      * @param component The component that will be firing.
      * @param chassis The chassis we are targeting
      */
-    /*
-    public RobotInfo chaseRobot(ComponentController component, Chassis chassis) {
+    public RobotInfo chaseRobot(ComponentController component, Navigation nav, Chassis chassis) {
         setChassis(chassis);
-        return chaseFirst(component, navigator);
+        return chaseRobot(component, nav);
     }
-    */
 
     /**
      * Targets and follows the first robot it sees.
      *
      * @param component The component that will be firing.
      */
-    /*
-    public RobotInfo chaseRobot(ComponentController component) {
+    public RobotInfo chaseRobot(ComponentController component, Navigation nav) {
+        boolean navigate = nav.bugNavigate();
         // Check cache
         if (updateCache()) {
+            nav.setDestination(robotInfo.location, 2);
             if (component.withinRange(robotInfo.location))
                 return robotInfo;
             else {
-                navigator.navigate(robotInfo.location);
+                if (navigate)
+                    try {
+                        myRP.motor.setDirection(
+                                myRC.getLocation().directionTo(robotInfo.location)
+                                );
+                    } catch (GameActionException e) {e.printStackTrace();}
                 return null;
             }
         }
 
         // Find a new robot.
         for (Robot r : robots) {
-            if (team == r.getTeam())
+            if (team != r.getTeam())
                 continue;
             try {
                 robotInfo = sensor.senseRobotInfo(r);
                 if (chassis == null || chassis == robotInfo.chassis) {
+                    nav.setDestination(robotInfo.location, 2);
                     if (component.withinRange(robotInfo.location))
                         return robotInfo;
                     else {
-                        navigator.navigate(robotInfo.location);
+                        if (navigate)
+                            myRP.motor.setDirection(
+                                    myRC.getLocation().directionTo(robotInfo.location)
+                                    );
                         return null;
                     }
                 }
             } catch (GameActionException e) {e.printStackTrace();}
-            robotInfo = null;
-            return null;
         }
+        robotInfo = null;
+        return null;
     }
-    */
 }
 

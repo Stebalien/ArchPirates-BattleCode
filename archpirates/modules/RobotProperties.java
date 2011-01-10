@@ -4,13 +4,10 @@ import battlecode.common.*;
 
 public class RobotProperties {
 	public final RobotController myRC;
-    public final Team myTeam;
-    public final Team opTeam;
-    public Cast cast;
+    public final Team myTeam, opTeam;
 
     public ComponentController [] components;
-    public WeaponController [] guns;
-    public WeaponController [] beams;
+    public WeaponController [] guns, beams;
     public MovementController motor;
     public SensorController sensor;
     public BuilderController builder;
@@ -67,35 +64,6 @@ public class RobotProperties {
         }
         for (int i = 0; i<c_beams; i++) {
             beams[i] = tmp_beams[i];
-        }
-
-        switch (myRC.getChassis()) {
-            case LIGHT:
-                if (builder != null)
-                    cast = Cast.SCOUT;
-                else
-                    cast = Cast.FIGHTER;
-                break;
-            case MEDIUM:
-                cast = Cast.FIGHTER;
-                break;
-            case HEAVY:
-                cast = Cast.FIGHTER;
-                break;
-            case FLYING:
-                if (dropship != null)
-                    cast = Cast.TRANSPORT;
-                else
-                    cast = Cast.MEDIC;
-                break;
-            case BUILDING:
-                if (builder.type() == ComponentType.RECYCLER)
-                    cast = Cast.MINER;
-                else
-                    cast = Cast.MINER;
-                break;
-            default:
-                cast = Cast.FIGHTER;
         }
     }
 }
