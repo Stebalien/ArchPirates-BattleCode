@@ -35,7 +35,7 @@ public class Fighter extends Caste {
                         // TODO
                         break;
                     case PURSUE:
-                        attacker.pursue(targeter, nav);
+                        attacker.autoChase(targeter, nav);
                         break;
                     case YIELD:
                     default:

@@ -103,7 +103,7 @@ public class Attack {
         return false;
     }
 
-    public boolean pursue(Targeter targeter, Navigation nav) {
+    public boolean autoChase(Targeter targeter, Navigation nav) {
         RobotInfo info = null;
         ComponentType type = null;
         boolean active = false;
