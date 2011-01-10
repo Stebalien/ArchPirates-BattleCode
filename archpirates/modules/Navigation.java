@@ -154,7 +154,7 @@ public class Navigation {
      * @param motor the motor object for the robot
      * @param loc the destination location, in absolute coordinates
      *
-     * @see simplebot.RobotPlayer#navigate(MovementController)
+     * @see simplebot.RobotPlayer#bugNavigate(MovementController)
      */
     public void setDestination(MapLocation loc) {
         setDestination(loc, 0);
@@ -168,7 +168,7 @@ public class Navigation {
      * @param loc the destination location, in absolute coordinates
      * @param dist the distance away from the location you'd like to stop
      *
-     * @see simplebot.RobotPlayer#navigate(MovementController)
+     * @see simplebot.RobotPlayer#bugNavigate(MovementController)
      */
     public void setDestination(MapLocation loc, double dist) {
         // restart if this is a new destination

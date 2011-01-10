@@ -9,6 +9,11 @@ public abstract class Caste {
     protected final RobotProperties myRP;
     protected final Navigation nav;
 
+    /**
+     * Instantiates the abstract caste.
+     *
+     * @param rp This robots RobotProperties.
+     */
     public Caste(RobotProperties rp) {
         myRP = rp;
         myRC = myRP.myRC;
@@ -16,8 +21,16 @@ public abstract class Caste {
     }
 
 
-    public static Caste fate(RobotController myRC) {
-        RobotProperties myRP = new RobotProperties(myRC);
+    /**
+     * Fate the robot based on its components.
+     *
+     * Generates a RobotProperties and then chooses a caste based on the chassis and available components.
+     *
+     * @param rc The RobotController for this robot.
+     * @return The instantiated caste of the robot.
+     */
+    public static Caste fate(RobotController rc) {
+        RobotProperties myRP = new RobotProperties(rc);
 
         switch (myRC.getChassis()) {
             case LIGHT:
@@ -61,5 +74,10 @@ public abstract class Caste {
         myRC.yield();
     }
 
+    /**
+     * The state manager for this robot.
+     * If this method returns, the robot dies a lonely and miserable robot death.
+     * No techno dirge will be heard, no system beeps will be cried, no silent kernel panics will be shed.
+     */
     public abstract void SM();
 }
