@@ -19,10 +19,10 @@ public class Builder {
 
     private int p = -1; //progress
 
-    public Builder(RobotProperties properties) {
-        builder = properties.builder;
-        motor = properties.motor;
-        myRC = properties.myRC;
+    public Builder(RobotProperties rp) {
+        builder = rp.builder;
+        motor = rp.motor;
+        myRC = rp.myRC;
     }
 
     public TaskState startBuild(Chassis chassis, ComponentType... components) {
@@ -43,7 +43,6 @@ public class Builder {
         Direction direction = Direction.NORTH;
         for (int i = 0; i < 8; i++) {
             if (motor.canMove(direction = direction.rotateRight())) {
-                this.location = myRC.getLocation().add(direction);
                 return direction;
             }
         }
@@ -61,6 +60,8 @@ public class Builder {
                 direction = chooseBuildDirection();
                 if (direction == null)
                     return TaskState.WAITING;
+                else
+                    this.location = myRC.getLocation().add(direction);
             }
             if (motor.canMove(direction)) {
                 try {
@@ -79,10 +80,11 @@ public class Builder {
             }
         }
 
-        // Can I build
-        if (motor.canMove(direction)) {
+        // Only build if we can
+        if (this.location == null || this.direction == null || motor.canMove(direction)) {
             p = -1;
             direction = null;
+            location = null;
             return TaskState.FAIL;
         }
 
