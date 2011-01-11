@@ -57,7 +57,7 @@ public class Miner extends Caste {
         }
     }
     private void start() {
-        switch(builder.startBuild(Chassis.LIGHT, ComponentType.SMG, ComponentType.RADAR)) {
+        switch(builder.startBuild(Chassis.LIGHT, ComponentType.CONSTRUCTOR, ComponentType.SIGHT)) {
             case ACTIVE:
             case WAITING:
                 state = State.BUILD;
