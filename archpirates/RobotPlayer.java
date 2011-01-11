@@ -22,9 +22,9 @@ public class RobotPlayer implements Runnable {
 
 	public void run() {
         // Run this first so that we read the array into memory.
-        MessageID.get();
+        //MessageID.get();
         ComponentController [] components = myRC.components();
-        if (components.length <= 1) {
+        if (components.length <= 2) {
             myRC.turnOff();
         }
         Caste caste = Caste.fate(myRC);
