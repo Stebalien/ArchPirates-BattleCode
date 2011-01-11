@@ -32,7 +32,7 @@ public abstract class Caste {
     public static Caste fate(RobotController rc) {
         RobotProperties myRP = new RobotProperties(rc);
 
-        switch (myRC.getChassis()) {
+        switch (rc.getChassis()) {
             case LIGHT:
                 if (myRP.builder != null)
                     return new Scout(myRP);
