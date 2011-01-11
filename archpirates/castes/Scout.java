@@ -24,7 +24,6 @@ public class Scout extends Caste {
         builder = new Builder(rp);
 
         targets = new Mine[10];
-        ti = -1;
     }
 
     public void SM() {
@@ -58,9 +57,7 @@ public class Scout extends Caste {
 
     private void init() {
         nav.setDestination(new MapLocation(0, 0));
-        Mine[] targets = new Mine[10];
-        int ti = -1;
-
+        ti = -1;
         state = State.WANDER;
     }
 
