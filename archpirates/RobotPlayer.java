@@ -7,6 +7,7 @@ import archpirates.modules.Builder;
 import archpirates.modules.TaskState;
 import archpirates.modules.Navigation;
 import archpirates.modules.Caste;
+import archpirates.modules.MessageID;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -19,6 +20,8 @@ public class RobotPlayer implements Runnable {
     }
 
 	public void run() {
+        // Run this first so that we read the array into memory.
+        MessageID.get();
         ComponentController [] components = myRC.components();
         if (components.length <= 1) {
             myRC.turnOff();
