@@ -6,8 +6,9 @@ import archpirates.modules.Targeter;
 import archpirates.modules.Builder;
 import archpirates.modules.TaskState;
 import archpirates.modules.Navigation;
-import archpirates.modules.Caste;
 import archpirates.modules.MessageID;
+
+import archpirates.castes.Caste;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
