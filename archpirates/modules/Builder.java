@@ -9,6 +9,7 @@ public class Builder {
     private final BuilderController builder;
     private final SensorController sensor;
     private final RobotController myRC;
+    private final int range;
 
     // Cache
     private MapLocation location;
@@ -31,6 +32,7 @@ public class Builder {
         builder = rp.builder;
         sensor = rp.sensor;
         myRC = rp.myRC;
+        range = (int)(sensor.type().angle / 45);
     }
 
     /**
@@ -108,11 +110,25 @@ public class Builder {
             if (myRC.getTeamResources() < MULT*chassis.cost)
                 return TaskState.WAITING;
             if (location == null) {
-                Direction tmp_dir = myRC.getDirection();
-                MapLocation tmp_loc = myRC.getLocation();
-                for (int i = 8; --i > 0;) {
-                    tmp_dir = tmp_dir.rotateRight();
-                    tmp_loc = tmp_loc.add(tmp_dir);
+                Direction l_dir, r_dir;
+                l_dir = r_dir = myRC.getDirection();
+
+                MapLocation my_loc = myRC.getLocation();
+                MapLocation tmp_loc = my_loc.add(r_dir);
+
+                if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                    location = tmp_loc;
+                }
+
+                for (int i = range; --i > 0;) {
+                    r_dir = r_dir.rotateRight();
+                    tmp_loc = my_loc.add(r_dir);
+                    if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                        location = tmp_loc;
+                        break;
+                    }
+                    l_dir = l_dir.rotateLeft();
+                    tmp_loc = my_loc.add(l_dir);
                     if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
                         location = tmp_loc;
                         break;
@@ -121,7 +137,7 @@ public class Builder {
                 if (location == null)
                     return TaskState.WAITING;
             }
-            if (sensor.senseObjectAtLocation(location, level) == null) {
+            if (sensor.canSenseSquare(location) && sensor.senseObjectAtLocation(location, level) == null) {
                 try {
                     builder.build(chassis, location);
                     p++;
