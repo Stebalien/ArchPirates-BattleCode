@@ -104,7 +104,7 @@ public class StartingScout extends Caste {
         } else if(ti == 1) {
             // Found first mine, move towards it and build
             if(nav.bugNavigate()) {
-                builder.startBuild(Chassis.BUILDING, myRC.getLocation().directionTo(targets[1].getLocation()), ComponentType.RECYCLER);
+                builder.startBuild(true, targets[1].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
                 builder.doBuild();
 
                 nav.setDestination(targets[0].getLocation(), 1.9);
@@ -120,7 +120,7 @@ public class StartingScout extends Caste {
                     // but adds time to navigation and builds the armory too far away from home base
                     nav.move(false);
                 } else {
-                    builder.startBuild(Chassis.BUILDING, myRC.getLocation().directionTo(targets[0].getLocation()), ComponentType.RECYCLER);
+                    builder.startBuild(true, targets[0].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
                     builder.doBuild();
 
                     state = State.BUILD_INIT;
@@ -129,7 +129,7 @@ public class StartingScout extends Caste {
         } else {
             // Finally, build the armory in the first square available (Doing a right sweep starting
             // from forward)
-            builder.startBuild(Chassis.BUILDING, ComponentType.ARMORY);
+            builder.startBuild(true, Chassis.BUILDING, ComponentType.ARMORY);
             builder.doBuild();
             state = State.BUILD_INIT;
         }
@@ -176,7 +176,6 @@ public class StartingScout extends Caste {
     }
 
     private void search() throws GameActionException {
-System.out.println("### Wall following ###");
         if(ti < 0) {
             Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
             for(Mine m: mines) {
@@ -187,21 +186,17 @@ System.out.println("### Wall following ###");
                         wallDir = myRC.getDirection();
                     }
                     nav.setDestination(m.getLocation(), 1.5);
-System.out.println("#### Found a mine, storing old location: loc=" + wallLoc + ", dir=" + wallDir + " ###");
                 }
             }
         }
 
         if(ti < 0) {
-System.out.println("#### Got no more mines ###");
             if(wallLoc != null) {
-System.out.println("##### Navigating back to old location ###");
                 nav.setDestination(wallLoc, wallDir, 0);
                 if(nav.bugNavigate()) {
                     wallLoc = null;
                 }
             } else {
-System.out.println("#### Following da wall ###");
                 nav.wallFollow(false);
             }
         } else if(nav.bugNavigate()) {
@@ -212,14 +207,14 @@ System.out.println("#### Following da wall ###");
                 if(nav.canMoveBackward())
                     nav.move(false);
             } else {
-                builder.startBuild(Chassis.BUILDING, loc.directionTo(mineLoc), ComponentType.RECYCLER);
+                builder.startBuild(true, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
                 builder.doBuild();
                 state = State.BUILD;
             }
         }
     }
 
-    private void build() {
+    private void build() throws GameActionException {
         switch(builder.doBuild()) {
             case ACTIVE:
             case WAITING:

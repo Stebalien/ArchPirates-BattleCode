@@ -42,30 +42,15 @@ public abstract class Caste {
                 return new Fighter(myRP);
             case HEAVY:
                 return new Fighter(myRP);
-                /*
             case FLYING:
-                if (myRP.dropship != null)
-                    return new Transport(myRP);
-                else
-                    return new Medic(myRP);
-                    */
+                return new Scout(myRP);
             case BUILDING:
-                /*
-                if (myRP.builder == null)
-                    return new Tower(myRP);
-                else {
-                    switch (myRP.builder.type()) {
-                        case RECYCLER:
-                */
-                            return new Miner(myRP);
-                /*
-                        case FACTORY:
-                            return new Factory(myRP);
-                        case ARMORY:
-                            return new Armory(myRP);
-                    }
+                switch (myRP.builder.type()) {
+                    case RECYCLER:
+                        return new Miner(myRP);
+                    case ARMORY:
+                        return new Armory(myRP);
                 }
-                */
             default:
                 return new Fighter(myRP);
         }

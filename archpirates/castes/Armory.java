@@ -3,24 +3,26 @@ package archpirates.castes;
 import archpirates.modules.*;
 import battlecode.common.*;
 
-public class Miner extends Caste {
+public class Armory extends Caste {
     private static enum State {
         START,
+        IDLE,
         BUILD,
-        FINISH,
-        FAIL,
         YIELD
     }
     private State state;
 
     private final Builder builder;
-    int c;
+    private MapLocation[] locations;
+    int locIndex;
 
-    public Miner(RobotProperties rp){
+    public Armory(RobotProperties rp) {
         super(rp);
 
-        state = State.YIELD;
-        c = 0;
+        locations = new MapLocation[2]; // We can do this because there will only be one factory, near the start base
+        locIndex = -1;
+
+        state = State.START;
         builder = new Builder(rp);
     }
 
@@ -31,17 +33,11 @@ public class Miner extends Caste {
                     case START:
                         start();
                         break;
+                    case IDLE:
+                        idle();
+                        break;
                     case BUILD:
                         build();
-                        break;
-                    case FINISH:
-                        if (++c == 1)
-                            state = State.YIELD;
-                        else
-                            state = State.START;
-                        break;
-                    case FAIL:
-                        state = State.START;
                         break;
                     case YIELD:
                     default:
@@ -56,31 +52,35 @@ public class Miner extends Caste {
             myRC.yield();
         }
     }
+
     private void start() {
-        switch(builder.startBuild(true, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
-            case ACTIVE:
-            case WAITING:
-                state = State.BUILD;
-                break;
-            case FAIL:
-            default:
-                state = State.FAIL;
-                break;
+        MapLocation loc = myRC.getLocation();
+
+        Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
+        for(Mine m: mines) {
+            MapLocation mloc = m.getLocation();
+            if(loc.isAdjacentTo(mloc))
+                locations[++locIndex] = mloc;
         }
-    }
-    private void build() throws GameActionException {
-        switch (builder.doBuild()) {
-            case ACTIVE:
-            case WAITING:
-                break;
-            case DONE:
-                state = State.FINISH;
-                break;
-            case FAIL:
-            default:
-                state = State.FAIL;
-                break;
-        }
+
+        locIndex = 0;
+        state = State.IDLE;
     }
 
+    private void idle() throws GameActionException {
+        builder.startBuild(false, locations[locIndex], Chassis.FLYING);
+        state = state.BUILD;
+    }
+
+    private void build() throws GameActionException {
+        switch (builder.doBuild()) {
+            case DONE:
+            case FAIL:
+                state = State.IDLE;
+                locIndex = locIndex^1;
+                break;
+            default:
+                break;
+        }
+    }
 }

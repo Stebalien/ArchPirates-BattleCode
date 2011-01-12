@@ -80,7 +80,7 @@ public class Communication {
             locations = m.locations;
             // 1. Check if ints is null.
             // 2. Check if locations is null.
-            // 3. ints needs at 3 items.
+            // 3. ints needs at 2 items.
             // 4. The first int must be either the current or the previous id.
             // 5. The the bitmask must be doubled.
             // 6. The mask must match the passed bitmask.
@@ -89,7 +89,7 @@ public class Communication {
             // 8. The locations array must be even.
             if (  ints == null
                || locations == null
-               || ints.length != 2
+               || ints.length < 2
                ||!(  ints[0] == id_now
                   || ints[0] == id_prev
                   )

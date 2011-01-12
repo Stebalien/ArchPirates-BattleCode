@@ -80,13 +80,13 @@ public class Scout extends Caste {
                 if(nav.canMoveBackward())
                     nav.move(false);
             } else {
-                builder.startBuild(Chassis.BUILDING, loc.directionTo(mineLoc), ComponentType.RECYCLER);
+                builder.startBuild(true, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
                 state = State.BUILD;
             }
         }
     }
 
-    private void build() {
+    private void build() throws GameActionException {
         switch(builder.doBuild()) {
             case ACTIVE:
             case WAITING:

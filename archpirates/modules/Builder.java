@@ -121,7 +121,7 @@ public class Builder {
                 if (location == null)
                     return TaskState.WAITING;
             }
-            if (sensor.senseObjectAtLocation(location, level) != null) {
+            if (sensor.senseObjectAtLocation(location, level) == null) {
                 try {
                     builder.build(chassis, location);
                     p++;
@@ -146,36 +146,40 @@ public class Builder {
             return TaskState.FAIL;
         }
 
-        // Build Components if we have the money.
-        if (myRC.getTeamResources() < MULT*components[p].cost)
-            return TaskState.WAITING;
-        else {
-            try {
-                builder.build(components[p], location, level);
-            } catch (Exception e) {
-                System.out.println("caught exception:");
-                e.printStackTrace();
-                p = -1;
-                location = null;
-                turn_on = true;
-                return TaskState.FAIL;
+        if(components.length > 0) {
+            // Build Components if we have the money.
+            if (myRC.getTeamResources() < MULT*components[p].cost)
+                return TaskState.WAITING;
+            else {
+                try {
+                    builder.build(components[p], location, level);
+                } catch (Exception e) {
+                    System.out.println("caught exception:");
+                    e.printStackTrace();
+                    p = -1;
+                    location = null;
+                    turn_on = true;
+                    return TaskState.FAIL;
+                }
             }
         }
 
         // Complete build or return in progress.
         if (++p == components.length) {
-            p = -1;
-            location = null;
-            turn_on = true;
             try {
                 if (turn_on)
                     myRC.turnOn(location, level);
-                return TaskState.DONE;
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
                 return TaskState.FAIL;
+            } finally {
+                p = -1;
+                location = null;
+                turn_on = true;
             }
+
+            return TaskState.DONE;
         } else {
             return TaskState.ACTIVE;
         }
