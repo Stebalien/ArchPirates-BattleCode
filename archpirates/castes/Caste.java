@@ -37,7 +37,10 @@ public abstract class Caste {
 
         switch (rc.getChassis()) {
             case LIGHT:
-                return new StartingScout(myRP);
+                if (myRP.builder != null)
+                    return new StartingScout(myRP);
+                else
+                    return new Fighter(myRP);
             case MEDIUM:
                 return new Fighter(myRP);
             case HEAVY:
