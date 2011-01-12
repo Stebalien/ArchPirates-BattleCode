@@ -1,6 +1,7 @@
 package archpirates.castes;
 
 import archpirates.modules.Navigation;
+import archpirates.modules.Communication;
 import archpirates.modules.RobotProperties;
 import battlecode.common.*;
 
@@ -8,6 +9,7 @@ public abstract class Caste {
     protected final RobotController myRC;
     protected final RobotProperties myRP;
     protected final Navigation nav;
+    protected final Communication com;
 
     /**
      * Instantiates the abstract caste.
@@ -18,6 +20,7 @@ public abstract class Caste {
         myRP = rp;
         myRC = myRP.myRC;
         nav = new Navigation(myRP);
+        com = new Communication(myRP);
     }
 
 
