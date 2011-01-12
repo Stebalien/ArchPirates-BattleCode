@@ -4,7 +4,7 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
 public class Builder {
-    private static int MULT = 2; // We need at least MULT * RESOURCES to build.
+    private static double MULT = 1.2; // We need at least MULT * RESOURCES to build.
 
     private final BuilderController builder;
     private final MovementController motor;
@@ -70,7 +70,7 @@ public class Builder {
     }
 
     private Direction chooseBuildDirection() {
-        Direction direction = Direction.NORTH;
+        Direction direction = myRC.getDirection();
         for (int i = 0; i < 8; i++) {
             if (motor.canMove(direction = direction.rotateRight())) {
                 return direction;

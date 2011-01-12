@@ -17,6 +17,7 @@ public class Navigation {
     private int bnav_lastDist,
                 bnav_targetDist;
     private MapLocation bnav_lastDest;
+    private Direction bnav_lastDir;
     private int wfTurned;
     private boolean right;
 
@@ -49,7 +50,7 @@ public class Navigation {
      * @param sensor the sensor used to view the map
      * @return false if there is a destination that hasn't been reached, true otherwise
      */
-    public boolean bugNavigate() {
+    public boolean bugNavigate() throws GameActionException {
         // If the motor is cooling down, don't bother navigating
         // Also return if no destination is set
         // Some precomputation might be useful eventually
@@ -59,18 +60,21 @@ public class Navigation {
         // Likewise, if the robot is already at its destination,
         // signal finish
         MapLocation loc = myRC.getLocation();
+        Direction cur = myRC.getDirection();
         int targetDist = loc.distanceSquaredTo(bnav_lastDest);
-        System.out.println("Distance to target: " + targetDist);
         if(targetDist <= bnav_targetDist) {
+            if(bnav_lastDir != null && bnav_lastDir != cur) {
+                motor.setDirection(bnav_lastDir);
+                return false;
+            }
             bnav_lastDest = null;
+            bnav_lastDir = null;
             bnav_lastDist = 0;
             return true;
         }
 
         Direction d = loc.directionTo(bnav_lastDest);
-        Direction cur = myRC.getDirection();
 
-            try {
         if(bnav_lastDist == 0) {
             // Try navigating towards the goal
             if(d == cur) {
@@ -86,7 +90,7 @@ public class Navigation {
                 motor.setDirection(d);
             }
         } else {
-            // Sample, do a right-hand follow, escaping when robot faces target
+            // Do a wall follow around the obstacle, escaping when robot faces target
             // Switches directions if the robot travels too far away from the
             // destination
 
@@ -116,7 +120,8 @@ public class Navigation {
                     scan = scan.rotateLeft();
             }
 
-            if(scan == test || (motor.canMove(d) && targetDist <= bnav_lastDist)) {
+            // If the way to the destination is open, go that way
+            if(motor.canMove(d) && targetDist <= bnav_lastDist) {
                 bnav_lastDist = 0;
                 scan = d;
             }
@@ -124,14 +129,12 @@ public class Navigation {
             // Movement code, based on goal direction
             // If the open square is forward, move forward, otherwise turn
             if(scan == cur) {
-                // Check square leading to destination, if that is free, take it and
-                // stop wall following
-                if(motor.canMove(cur)) {
-                    motor.moveForward();
-                    wfTurned = 0;
-                }
+                motor.moveForward();
+                wfTurned = 0;
             } else {
                 if(wfTurned > 1) {
+                    // May have lost a wall, reset destination and stop wall following
+                    // (prevents getting stuck in a turning loop)
                     motor.setDirection(d);
                     bnav_lastDist = 0;
                     wfTurned = 0;
@@ -141,9 +144,6 @@ public class Navigation {
                 }
             }
         }
-            } catch(Exception e) {
-                // Do nothing at the moment
-            }
 
         return false;
     }
@@ -157,7 +157,7 @@ public class Navigation {
      * @see simplebot.RobotPlayer#bugNavigate(MovementController)
      */
     public void setDestination(MapLocation loc) {
-        setDestination(loc, 0);
+        setDestination(loc, null, 0);
     }
 
     /**
@@ -171,11 +171,80 @@ public class Navigation {
      * @see simplebot.RobotPlayer#bugNavigate(MovementController)
      */
     public void setDestination(MapLocation loc, double dist) {
+        setDestination(loc, null, dist);
+    }
+
+    /**
+     * Navigates towards the given map location, stopping when the robot is the
+     * given distance away.  Ends by facing the given direction.  This restarts
+     * the current bug navigation.
+     *
+     * @param motor the motor object for the robot
+     * @param loc the destination location, in absolute coordinates
+     * @parma dir the destination direction, if desired
+     * @param dist the distance away from the location you'd like to stop
+     *
+     * @see simplebot.RobotPlayer#bugNavigate(MovementController)
+     */
+    public void setDestination(MapLocation loc, Direction dir, double dist) {
         // restart if this is a new destination
         if(!loc.equals(bnav_lastDest)) {
-            bnav_lastDist = myRC.getLocation().distanceSquaredTo(loc);
+            if(bnav_lastDist != 0)
+                bnav_lastDist = myRC.getLocation().distanceSquaredTo(loc);
             bnav_targetDist = (int)(dist*dist);
             bnav_lastDest = loc;
+        }
+
+        bnav_lastDir = dir;
+    }
+
+    /**
+     * Performs the steps necessary to navigate using a wall-following algorithm.
+     * left or right is specified by a boolean value.  Not compatible with bugNavigate
+     *
+     * @param right if true, follow a right-hand wall, else follow the left
+     */
+    public void wallFollow(boolean right) throws GameActionException {
+        if(motor.isActive())
+            return;
+
+        // scan left to right for open directions:
+        Direction cur = myRC.getDirection();
+        Direction scan, test;
+        if(right) {
+            scan = cur.rotateLeft();
+            test = scan.rotateLeft();
+        } else {
+            scan = cur.rotateRight();
+            test = scan.rotateRight();
+        }
+
+        while(scan != test) {
+            if(motor.canMove(scan))
+                break;
+            if(right)
+                scan = scan.rotateRight();
+            else
+                scan = scan.rotateLeft();
+        }
+
+        // If the open square is forward, move forward, otherwise turn
+        if(scan == cur) {
+            motor.moveForward();
+            wfTurned = 0;
+        } else {
+            if(wfTurned > 4) {
+                // May have lost a wall, move forward until a wall is found, then resume
+                if(motor.canMove(cur)) {
+                    motor.moveForward();
+                } else {
+                    wfTurned = 0;
+                    motor.setDirection(scan);
+                }
+            } else {
+                motor.setDirection(scan);
+                wfTurned++;
+            }
         }
     }
 
@@ -247,5 +316,16 @@ public class Navigation {
      */
     public boolean canMoveBackward() {
         return motor.canMove(myRC.getDirection().opposite());
+    }
+
+    /**
+     * Tests if the robot can move in the given direction, wraps around
+     * MovementController
+     *
+     * @param dir Direction to test movement
+     * @return true if the robot can move in the given direction, false otherwise
+     */
+    public boolean canMove(Direction d) {
+        return motor.canMove(d);
     }
 }

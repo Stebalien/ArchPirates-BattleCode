@@ -19,7 +19,7 @@ public class Miner extends Caste {
     public Miner(RobotProperties rp){
         super(rp);
 
-        state = State.START;
+        state = State.YIELD;
         c = 0;
         builder = new Builder(rp);
     }
