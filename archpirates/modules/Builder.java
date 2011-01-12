@@ -8,8 +8,10 @@ public class Builder {
 
     private final BuilderController builder;
     private final SensorController sensor;
+    private final MovementController motor;
     private final RobotController myRC;
-    private final int range;
+    private final int periph; // Number of squares that we can see in our peripheral vision.
+    private final RobotLevel myLevel;
 
     // Cache
     private MapLocation location;
@@ -18,7 +20,7 @@ public class Builder {
     private ComponentType [] components;
     private boolean turn_on;
 
-    private int p = -1; //progress
+    private int p = -2; //progress
 
     /**
      * Builds buildings and robots.
@@ -31,8 +33,10 @@ public class Builder {
     public Builder(RobotProperties rp) {
         builder = rp.builder;
         sensor = rp.sensor;
+        motor = rp.motor;
         myRC = rp.myRC;
-        range = (int)(sensor.type().angle / 45);
+        periph = (int)((sensor.type().angle / 90));
+        myLevel = myRC.getRobot().getRobotLevel();
     }
 
     /**
@@ -106,78 +110,79 @@ public class Builder {
         // Build Chassis
         if (builder.isActive()) return TaskState.ACTIVE;
 
-        if (p == -1) {
-            if (myRC.getTeamResources() < MULT*chassis.cost)
-                return TaskState.WAITING;
-            if (location == null) {
-                Direction l_dir, r_dir;
-                l_dir = r_dir = myRC.getDirection();
-
-                MapLocation my_loc = myRC.getLocation();
-                MapLocation tmp_loc = my_loc.add(r_dir);
-
-                if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                    location = tmp_loc;
+        switch(p) {
+            case -2:
+                return TaskState.FAIL;
+            case -1:
+                if (chassis == null) {
+                    p = -2;
+                    return TaskState.FAIL;
                 }
-
-                for (int i = range; --i > 0;) {
-                    r_dir = r_dir.rotateRight();
-                    tmp_loc = my_loc.add(r_dir);
-                    if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                        location = tmp_loc;
-                        break;
-                    }
-                    l_dir = l_dir.rotateLeft();
-                    tmp_loc = my_loc.add(l_dir);
-                    if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                        location = tmp_loc;
-                        break;
-                    }
-                }
-                if (location == null)
+                if (myRC.getTeamResources() < MULT*chassis.cost)
                     return TaskState.WAITING;
-            }
-            if (sensor.canSenseSquare(location) && sensor.senseObjectAtLocation(location, level) == null) {
+                if (location == null) {
+                    MapLocation my_loc = myRC.getLocation();
+                    Direction my_dir = myRC.getDirection(); // Also becomes r_dir
+
+                    if (level == myLevel) {
+                        for (int i = 8; i-- > 0;) {
+                            if (motor.canMove(my_dir)) {
+                                location = my_loc.add(my_dir);
+                                break;
+                            }
+                            my_dir = my_dir.rotateRight();
+                        }
+                    } else {
+                        Direction l_dir = my_dir;
+                        MapLocation tmp_loc = my_loc.add(my_dir);
+
+                        if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                            location = tmp_loc;
+                        }
+
+                        for (int i = periph; i-- > 0;) {
+                            my_dir = my_dir.rotateRight();
+                            tmp_loc = my_loc.add(my_dir);
+                            if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                                location = tmp_loc;
+                                break;
+                            }
+                            l_dir = l_dir.rotateLeft();
+                            tmp_loc = my_loc.add(l_dir);
+                            if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                                location = tmp_loc;
+                                break;
+                            }
+                        }
+                    } 
+                    if (location == null)
+                        return TaskState.WAITING;
+                }
+                // If you specify a location, you better be able to build in it.
+                // I don't check.
                 try {
                     builder.build(chassis, location);
-                    p++;
-                    return TaskState.ACTIVE;
                 } catch (Exception e) {
                     System.out.println("caught exception:");
                     e.printStackTrace();
-                    p = -1;
-                    location = null;
-                    turn_on = true;
+                    p = -2;
                     return TaskState.FAIL;
                 }
-            } else {
-                return TaskState.FAIL;
-            }
-        }
-
-        // Only build if we can
-        if (this.location == null || sensor.senseObjectAtLocation(location, level) == null) {
-            p = -1;
-            location = null;
-            return TaskState.FAIL;
-        }
-
-        if(components.length > 0) {
-            // Build Components if we have the money.
-            if (myRC.getTeamResources() < MULT*components[p].cost)
-                return TaskState.WAITING;
-            else {
-                try {
-                    builder.build(components[p], location, level);
-                } catch (Exception e) {
-                    System.out.println("caught exception:");
-                    e.printStackTrace();
-                    p = -1;
-                    location = null;
-                    turn_on = true;
-                    return TaskState.FAIL;
+                break;
+            default:
+                // I don't check if I can still build because the exception doesn't really cost that much and checking this is a PAIN.
+                if (myRC.getTeamResources() < MULT*components[p].cost)
+                    return TaskState.WAITING;
+                else {
+                    try {
+                        builder.build(components[p], location, level);
+                    } catch (Exception e) {
+                        System.out.println("caught exception:");
+                        e.printStackTrace();
+                        p = -2;
+                        return TaskState.FAIL;
+                    }
                 }
-            }
         }
 
         // Complete build or return in progress.
@@ -190,11 +195,8 @@ public class Builder {
                 e.printStackTrace();
                 return TaskState.FAIL;
             } finally {
-                p = -1;
-                location = null;
-                turn_on = true;
+                p = -2;
             }
-
             return TaskState.DONE;
         } else {
             return TaskState.ACTIVE;
