@@ -21,17 +21,17 @@ public class Attack {
     /**
      * Fire everything location.
      */
-    public void fireAt(MapLocation location, RobotLevel level) {
+    public void fireAt(MapLocation location, RobotLevel level) throws GameActionException {
         fireAt(location, level, guns);
         fireAt(location, level, beams);
     }
-    public void fireGunsAt(MapLocation location, RobotLevel level) {
+    public void fireGunsAt(MapLocation location, RobotLevel level) throws GameActionException {
         fireAt(location, level, guns);
     }
-    public void fireBeamsAt(MapLocation location, RobotLevel level) {
+    public void fireBeamsAt(MapLocation location, RobotLevel level) throws GameActionException {
         fireAt(location, level, beams);
     }
-    public void fireAt(MapLocation location, RobotLevel level, WeaponController [] weapons) {
+    public void fireAt(MapLocation location, RobotLevel level, WeaponController [] weapons) throws GameActionException {
         for (WeaponController weapon : weapons) {
             if ( !weapon.isActive() && weapon.withinRange(location)) {
                 try {
@@ -47,7 +47,7 @@ public class Attack {
      *
      * @return True if a gun was fired.
      */
-    public boolean autoFire(Targeter targeter) {
+    public boolean autoFire(Targeter targeter) throws GameActionException {
         return autoFire(targeter, guns); 
     }
 
@@ -60,7 +60,7 @@ public class Attack {
      *
      * @return True if a gun was fired.
      */
-    public boolean autoFire(Targeter targeter, WeaponController [] guns) {
+    public boolean autoFire(Targeter targeter, WeaponController [] guns) throws GameActionException {
         RobotInfo info = null;
         ComponentType type = null;
         boolean active = false;
@@ -90,7 +90,7 @@ public class Attack {
      *
      * @return True if a gun was fired.
      */
-    public boolean autoFire(Targeter targeter, WeaponController gun) {
+    public boolean autoFire(Targeter targeter, WeaponController gun) throws GameActionException {
         if (gun.isActive()) return true;
 
         RobotInfo info = targeter.targetRobot(gun);
@@ -103,10 +103,10 @@ public class Attack {
         return false;
     }
 
-    public boolean autoChase(Targeter targeter, Navigation nav) {
+    public boolean autoChase(Targeter targeter, Navigation nav) throws GameActionException {
         RobotInfo info = null;
         ComponentType type = null;
-        boolean active = false;
+        boolean active = nav.bugNavigate();
         for (WeaponController gun : guns) {
             // TODO: Group weapons better.
             if (!gun.isActive()) {
@@ -114,10 +114,8 @@ public class Attack {
                     info = targeter.chaseRobot(gun, nav);
                 if (info == null)
                     continue;
-                try {
-                    gun.attackSquare(info.location, info.robot.getRobotLevel());
-                    active = true;
-                } catch(GameActionException e) {e.printStackTrace();}
+                gun.attackSquare(info.location, info.robot.getRobotLevel());
+                active = true;
             } else {
                 active = true;
             }
