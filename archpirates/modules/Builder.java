@@ -7,7 +7,7 @@ public class Builder {
     private static double MULT = 1.2; // We need at least MULT * RESOURCES to build.
 
     private final BuilderController builder;
-    private final MovementController motor;
+    private final SensorController sensor;
     private final RobotController myRC;
 
     // Cache
@@ -15,7 +15,7 @@ public class Builder {
     private RobotLevel level;
     private Chassis chassis;
     private ComponentType [] components;
-    private Direction direction;
+    private boolean turn_on;
 
     private int p = -1; //progress
 
@@ -29,54 +29,66 @@ public class Builder {
      */
     public Builder(RobotProperties rp) {
         builder = rp.builder;
-        motor = rp.motor;
+        sensor = rp.sensor;
         myRC = rp.myRC;
     }
 
     /**
-     * Start a build in the first free direction.
+     * Start a build in the first free location.
      *
      * Note, this method will NOT check if you can actually build said chassis/components.
      *
+     * @param turn_on turns the robot on if true.
      * @param chassis The chassis that will be built.
      * @param components A list of components (if any) that will be built on this chassis.
      *
      * @return TaskState.WAITING
      */
-    public TaskState startBuild(Chassis chassis, ComponentType... components) {
-        return startBuild(chassis, null, components);
+    public TaskState startBuild(boolean turn_on, Chassis chassis, ComponentType... components) {
+        return startBuild(turn_on, null, chassis, components);
     }
 
     /**
-     * Start a build in the specified direction.
+     * Start a build in the specified location.
      *
      * Note, this method will NOT check if you can actually build said chassis/components.
      *
+     * @param turn_on turns the robot on if true.
+     * @param location The location where the robot will be built.
      * @param chassis The chassis that will be built.
-     * @param direction The direction in which the robot will be built.
      * @param components A list of components (if any) that will be built on this chassis.
      *
      * @return TaskState.WAITING
      */
-    public TaskState startBuild(Chassis chassis, Direction direction, ComponentType... components) {
+    public TaskState startBuild(boolean turn_on, MapLocation location, Chassis chassis, ComponentType... components) {
         this.chassis = chassis;
-        this.direction = direction;
         this.level = chassis.level;
         this.components = components;
         this.p = -1;
-        if (direction != null)
-            this.location = myRC.getLocation().add(direction);
+        this.location = location;
+        this.turn_on = turn_on;
         return TaskState.WAITING;
     }
-
-    private Direction chooseBuildDirection() {
-        Direction direction = myRC.getDirection();
-        for (int i = 0; i < 8; i++) {
-            if (motor.canMove(direction = direction.rotateRight())) {
-                return direction;
-            }
-        }
-        return null;
+    /**
+     * Build components at a specified location and level.
+     *
+     * Note, this method will NOT check if you can actually build said components.
+     *
+     * @param turn_on turns the robot on if true.
+     * @param location The location where the components will be built.
+     * @param level The level at which the components will be built.
+     * @param components A list of components (if any) that will be built on this chassis.
+     *
+     * @return TaskState.WAITING
+     */
+    public TaskState startBuild(boolean turn_on, MapLocation location, RobotLevel level, ComponentType... components) {
+        this.p = 0;
+        this.chassis = null;
+        this.level = level;
+        this.components = components;
+        this.location = location;
+        this.turn_on = turn_on;
+        return TaskState.WAITING;
     }
 
     /**
@@ -88,21 +100,28 @@ public class Builder {
      *   * DONE when the build is done and the robot has turned on.
      *   * FAIL when the build fails.
      */
-    public TaskState doBuild() {
+    public TaskState doBuild() throws GameActionException {
         // Build Chassis
         if (builder.isActive()) return TaskState.ACTIVE;
 
         if (p == -1) {
             if (myRC.getTeamResources() < MULT*chassis.cost)
                 return TaskState.WAITING;
-            if (direction == null) {
-                direction = chooseBuildDirection();
-                if (direction == null)
+            if (location == null) {
+                Direction tmp_dir = myRC.getDirection();
+                MapLocation tmp_loc = myRC.getLocation();
+                for (int i = 8; --i > 0;) {
+                    tmp_dir = tmp_dir.rotateRight();
+                    tmp_loc = tmp_loc.add(tmp_dir);
+                    if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
+                        location = tmp_loc;
+                        break;
+                    }
+                }
+                if (location == null)
                     return TaskState.WAITING;
-                else
-                    this.location = myRC.getLocation().add(direction);
             }
-            if (motor.canMove(direction)) {
+            if (sensor.senseObjectAtLocation(location, level) != null) {
                 try {
                     builder.build(chassis, location);
                     p++;
@@ -111,7 +130,8 @@ public class Builder {
                     System.out.println("caught exception:");
                     e.printStackTrace();
                     p = -1;
-                    direction = null;
+                    location = null;
+                    turn_on = true;
                     return TaskState.FAIL;
                 }
             } else {
@@ -120,9 +140,8 @@ public class Builder {
         }
 
         // Only build if we can
-        if (this.location == null || this.direction == null || motor.canMove(direction)) {
+        if (this.location == null || sensor.senseObjectAtLocation(location, level) == null) {
             p = -1;
-            direction = null;
             location = null;
             return TaskState.FAIL;
         }
@@ -137,21 +156,24 @@ public class Builder {
                 System.out.println("caught exception:");
                 e.printStackTrace();
                 p = -1;
-                direction = null;
+                location = null;
+                turn_on = true;
                 return TaskState.FAIL;
             }
         }
 
         // Complete build or return in progress.
         if (++p == components.length) {
+            p = -1;
+            location = null;
+            turn_on = true;
             try {
-                myRC.turnOn(location, level);
+                if (turn_on)
+                    myRC.turnOn(location, level);
                 return TaskState.DONE;
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
-                p = -1;
-                direction = null;
                 return TaskState.FAIL;
             }
         } else {
