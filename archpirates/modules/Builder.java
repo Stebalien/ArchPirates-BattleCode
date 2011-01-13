@@ -15,7 +15,7 @@ public class Builder {
     private Chassis chassis;
     private ComponentType [] components;
     private boolean turn_on;
-
+    private int cost;
     private int p = -2; //progress
 
     /**
@@ -29,6 +29,18 @@ public class Builder {
     public Builder(RobotProperties rp) {
         builder = rp.builder;
         myRC = rp.myRC;
+    }
+
+    /**
+     * Sets the cost of the build.
+     */
+    private void setCost() {
+        if (this.chassis != null)
+            this.cost = this.chassis.cost;
+        else
+            this.cost = 0;
+        for (ComponentType c : this.components)
+            this.cost += c.cost;
     }
 
     /**
@@ -50,6 +62,7 @@ public class Builder {
         this.p = -1;
         this.location = location;
         this.turn_on = turn_on;
+        setCost();
         return TaskState.WAITING;
     }
     /**
@@ -71,6 +84,7 @@ public class Builder {
         this.components = components;
         this.location = location;
         this.turn_on = turn_on;
+        setCost();
         return TaskState.WAITING;
     }
 
@@ -96,7 +110,7 @@ public class Builder {
                     p = -2;
                     return TaskState.FAIL;
                 }
-                if (myRC.getTeamResources() < MULT*chassis.cost)
+                if (myRC.getTeamResources() < MULT*this.cost)
                     return TaskState.WAITING;
                 try {
                     builder.build(chassis, location);
@@ -110,7 +124,7 @@ public class Builder {
             default:
                 // I don't check if I can still build because the exception doesn't really cost that much and checking this is a PAIN.
                 if (myRC.getTeamResources() < MULT*components[p].cost)
-                    return TaskState.WAITING;
+                    return TaskState.ACTIVE;
                 else {
                     try {
                         builder.build(components[p], location, level);
