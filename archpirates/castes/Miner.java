@@ -9,14 +9,16 @@ public class Miner extends Caste {
         BUILD,
         YIELD
     }
-    private static final int MAX_SCOUTS = 5;
+    private static final int MAX_SCOUTS = 5,
+                             TIMEOUT = 500;
 
     private final Builder builder;
     private final MapLocation myLoc; // Buildings can't move.
 
     private boolean scout;
     private State state;
-    private int scouts;
+    private int scouts,
+                timer;
 
     public Miner(RobotProperties rp){
         super(rp);
@@ -53,6 +55,11 @@ public class Miner extends Caste {
     }
 
     private void idle() throws GameActionException {
+        if(scouts == 0 && (++timer) >= TIMEOUT) {
+            timer = 0;
+            myRC.turnOff();
+        }
+
         GameObject obj = myRP.sensor.senseObjectAtLocation(myLoc, RobotLevel.IN_AIR);
         if(obj != null && obj.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo((Robot)obj).on) {
             if(scout)
