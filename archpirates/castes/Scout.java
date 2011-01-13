@@ -56,7 +56,6 @@ public class Scout extends Caste {
 
 
     private void init() {
-        nav.setDestination(new MapLocation(0, 0));
         ti = -1;
         state = State.WANDER;
     }
@@ -84,6 +83,10 @@ public class Scout extends Caste {
                 state = State.BUILD;
             }
         }
+    }
+
+    private void findMines() {
+
     }
 
     private void build() throws GameActionException {

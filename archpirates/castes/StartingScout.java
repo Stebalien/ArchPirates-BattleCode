@@ -129,7 +129,11 @@ public class StartingScout extends Caste {
         } else {
             // Finally, build the armory in the first square available (Doing a right sweep starting
             // from forward)
-            builder.startBuild(true, Chassis.BUILDING, ComponentType.ARMORY);
+            Direction d = myRC.getDirection().rotateLeft();
+            while(!nav.canMove(d))
+                d = d.rotateLeft();
+
+            builder.startBuild(true, myRC.getLocation().add(d), Chassis.BUILDING, ComponentType.ARMORY);
             builder.doBuild();
             state = State.BUILD_INIT;
         }

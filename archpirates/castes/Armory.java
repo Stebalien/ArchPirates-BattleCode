@@ -8,13 +8,16 @@ public class Armory extends Caste {
         START,
         IDLE,
         BUILD,
+        DELAY,
         YIELD
     }
+    private static final int COOLDOWN = 150;
     private State state;
 
     private final Builder builder;
     private MapLocation[] locations;
-    int locIndex;
+    private int locIndex,
+                cooldown;
 
     public Armory(RobotProperties rp) {
         super(rp);
@@ -38,6 +41,9 @@ public class Armory extends Caste {
                         break;
                     case BUILD:
                         build();
+                        break;
+                    case DELAY:
+                        delay();
                         break;
                     case YIELD:
                     default:
@@ -68,19 +74,28 @@ public class Armory extends Caste {
     }
 
     private void idle() throws GameActionException {
-        builder.startBuild(false, locations[locIndex], Chassis.FLYING);
-        state = state.BUILD;
+        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null) {
+            builder.startBuild(false, locations[locIndex], Chassis.FLYING);
+            state = state.BUILD;
+        }
+
+        locIndex = locIndex^1;
     }
 
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
             case FAIL:
-                state = State.IDLE;
-                locIndex = locIndex^1;
+                cooldown = COOLDOWN;
+                state = State.DELAY;
                 break;
             default:
                 break;
         }
+    }
+
+    private void delay() {
+        if(--cooldown < 1)
+            state = State.IDLE;
     }
 }

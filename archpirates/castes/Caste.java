@@ -53,6 +53,8 @@ public abstract class Caste {
                         return new Miner(myRP);
                     case ARMORY:
                         return new Armory(myRP);
+                    default:
+                        return new Fighter(myRP);
                 }
             default:
                 return new Fighter(myRP);
