@@ -7,11 +7,7 @@ public class Builder {
     private static double MULT = 1.2; // We need at least MULT * RESOURCES to build.
 
     private final BuilderController builder;
-    private final SensorController sensor;
-    private final MovementController motor;
     private final RobotController myRC;
-    private final int periph; // Number of squares that we can see in our peripheral vision.
-    private final RobotLevel myLevel;
 
     // Cache
     private MapLocation location;
@@ -32,26 +28,7 @@ public class Builder {
      */
     public Builder(RobotProperties rp) {
         builder = rp.builder;
-        sensor = rp.sensor;
-        motor = rp.motor;
         myRC = rp.myRC;
-        periph = (int)((sensor.type().angle / 90));
-        myLevel = myRC.getRobot().getRobotLevel();
-    }
-
-    /**
-     * Start a build in the first free location.
-     *
-     * Note, this method will NOT check if you can actually build said chassis/components.
-     *
-     * @param turn_on turns the robot on if true.
-     * @param chassis The chassis that will be built.
-     * @param components A list of components (if any) that will be built on this chassis.
-     *
-     * @return TaskState.WAITING
-     */
-    public TaskState startBuild(boolean turn_on, Chassis chassis, ComponentType... components) {
-        return startBuild(turn_on, null, chassis, components);
     }
 
     /**
@@ -112,6 +89,7 @@ public class Builder {
 
         switch(p) {
             case -2:
+                // I shouldn't be able to build after a fail without initializing.
                 return TaskState.FAIL;
             case -1:
                 if (chassis == null) {
@@ -120,46 +98,6 @@ public class Builder {
                 }
                 if (myRC.getTeamResources() < MULT*chassis.cost)
                     return TaskState.WAITING;
-                if (location == null) {
-                    MapLocation my_loc = myRC.getLocation();
-                    Direction my_dir = myRC.getDirection(); // Also becomes r_dir
-
-                    if (level == myLevel) {
-                        for (int i = 8; i-- > 0;) {
-                            if (motor.canMove(my_dir)) {
-                                location = my_loc.add(my_dir);
-                                break;
-                            }
-                            my_dir = my_dir.rotateRight();
-                        }
-                    } else {
-                        Direction l_dir = my_dir;
-                        MapLocation tmp_loc = my_loc.add(my_dir);
-
-                        if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                            location = tmp_loc;
-                        }
-
-                        for (int i = periph; i-- > 0;) {
-                            my_dir = my_dir.rotateRight();
-                            tmp_loc = my_loc.add(my_dir);
-                            if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                                location = tmp_loc;
-                                break;
-                            }
-                            l_dir = l_dir.rotateLeft();
-                            tmp_loc = my_loc.add(l_dir);
-                            if (sensor.senseObjectAtLocation(tmp_loc, level) == null) {
-                                location = tmp_loc;
-                                break;
-                            }
-                        }
-                    } 
-                    if (location == null)
-                        return TaskState.WAITING;
-                }
-                // If you specify a location, you better be able to build in it.
-                // I don't check.
                 try {
                     builder.build(chassis, location);
                 } catch (Exception e) {
