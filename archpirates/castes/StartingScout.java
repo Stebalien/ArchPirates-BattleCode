@@ -185,13 +185,14 @@ public class StartingScout extends Caste {
         if(ti < 0) {
             Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
             for(Mine m: mines) {
-                if(ti < 9 && myRP.sensor.senseMineInfo(m).roundsLeft == GameConstants.MINE_ROUNDS) {
+                MapLocation mLoc = m.getLocation();
+                if(ti < 9 && myRP.sensor.senseObjectAtLocation(mLoc, RobotLevel.ON_GROUND) == null) {
                     targets[++ti] = m;
                     if(wallLoc == null) {
                         wallLoc = myRC.getLocation();
                         wallDir = myRC.getDirection();
                     }
-                    nav.setDestination(m.getLocation(), 1.5);
+                    nav.setDestination(mLoc, 1.5);
                 }
             }
         }

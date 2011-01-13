@@ -61,9 +61,10 @@ public class Scout extends Caste {
     private void wander() throws GameActionException {
         Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
         for(Mine m: mines) {
-            if(ti < 9 && myRP.sensor.senseMineInfo(m).roundsLeft == GameConstants.MINE_ROUNDS) {
+            MapLocation mLoc = m.getLocation();
+            if(ti < 9 && myRP.sensor.senseObjectAtLocation(mLoc, RobotLevel.ON_GROUND) == null) {
                 targets[++ti] = m;
-                nav.setDestination(m.getLocation(), 1.5);
+                nav.setDestination(mLoc, 1.5);
             }
         }
 
