@@ -176,7 +176,6 @@ public class Attacker {
                 tmpRobotInfo = sensor.senseRobotInfo(r);
                 if ((chassisMask == 0 || (chassisMask & (1 << tmpRobotInfo.chassis.ordinal())) != 0)) 
                 {
-                    System.out.println("THE MASK: " + this.chassisMask + " : " + tmpRobotInfo.chassis.ordinal());
                     // FIXME: see if this is slower/faster. may get rid of withinRange.
                     if (minGun.withinRange(tmpRobotInfo.location)) {
                         robotInfo = tmpRobotInfo;
