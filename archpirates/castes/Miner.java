@@ -58,7 +58,7 @@ public class Miner extends Caste {
             if(scout)
                 builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
             else
-                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
+                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG);
             builder.doBuild();
             state = State.BUILD;
         }

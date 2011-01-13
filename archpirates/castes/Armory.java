@@ -22,7 +22,6 @@ public class Armory extends Caste {
     public Armory(RobotProperties rp) {
         super(rp);
 
-        locations = new MapLocation[2]; // We can do this because there will only be one factory, near the start base
         locIndex = -1;
 
         state = State.START;
@@ -63,13 +62,22 @@ public class Armory extends Caste {
         MapLocation loc = myRC.getLocation();
 
         Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
-        for(Mine m: mines) {
-            MapLocation mloc = m.getLocation();
-            if(loc.isAdjacentTo(mloc))
-                locations[++locIndex] = mloc;
+        int numLoc = 0;
+        for(int i = 0; i < mines.length; i++) {
+            MapLocation mloc = mines[i].getLocation();
+            if(loc.isAdjacentTo(mloc)) {
+                numLoc++;
+            } else {
+               mines[i] = null;
+            }
         }
 
-        locIndex = 0;
+        locations = new MapLocation[numLoc];
+        for(Mine m: mines) {
+            if(m != null)
+                locations[++locIndex] = m.getLocation();
+        }
+
         state = State.IDLE;
     }
 
@@ -79,7 +87,7 @@ public class Armory extends Caste {
             state = state.BUILD;
         }
 
-        locIndex = locIndex^1;
+        locIndex = (locIndex+1+locations.length)%locations.length;
     }
 
     private void build() throws GameActionException {

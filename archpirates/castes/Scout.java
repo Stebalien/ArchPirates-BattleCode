@@ -16,6 +16,7 @@ public class Scout extends Caste {
     private final Builder builder;
     private Mine[] targets;
     private boolean armory;
+    private MapLocation lastMine;
     private int ti;
 
     public Scout(RobotProperties rp){
@@ -75,23 +76,29 @@ public class Scout extends Caste {
             }
 
             // If more than two mines are in the area, attempt to build another armory
-            armory = ti > 0;
+            armory = ti > 0 || (lastMine != null && ti == 0);
         }
 
         if(ti < 0) {
+            lastMine = null;
             if(nav.canMoveForward())
                 nav.move(true);
             else
                 nav.setDirection(myRC.getDirection().opposite().rotateLeft());
         } else if(nav.bugNavigate()) {
+            if(lastMine == null)
+                lastMine = targets[ti].getLocation();
             builder.startBuild(true, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
             state = State.BUILD;
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch(builder.doBuild()) {
             case FAIL:
+                armory = false;
+                lastMine = null;
             case DONE:
                 ti--;
                 if(ti > -1) {
@@ -103,11 +110,11 @@ public class Scout extends Caste {
                         System.out.println("##### BUILD AN ARMORY #######");
 
                         MapLocation l1 = targets[0].getLocation();
-                        MapLocation l2 = targets[1].getLocation();
+                        System.out.println("Two locations: " + l1 + ", and " + lastMine);
 
                         Direction d = Direction.NORTH;
                         while(d != Direction.NORTH_EAST) {
-                            MapLocation dest = l2.add(d);
+                            MapLocation dest = lastMine.add(d);
                             if(!dest.equals(l1)
                                && dest.isAdjacentTo(l1)
                                && myRC.senseTerrainTile(dest) == TerrainTile.LAND) {
@@ -138,6 +145,7 @@ public class Scout extends Caste {
             case FAIL:
             case DONE:
                 armory = false;
+                lastMine = null;
                 state = state.WANDER;
                 break;
             default:
