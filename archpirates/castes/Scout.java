@@ -4,6 +4,7 @@ import archpirates.modules.*;
 import battlecode.common.*;
 
 public class Scout extends Caste {
+    private static int TIMEOUT = 150;
     private static enum State {
         INIT,
         WANDER,
@@ -17,7 +18,8 @@ public class Scout extends Caste {
     private Mine[] targets;
     private boolean armory;
     private MapLocation lastMine;
-    private int ti;
+    private int ti,
+                timeout;
 
     public Scout(RobotProperties rp){
         super(rp);
@@ -89,6 +91,7 @@ public class Scout extends Caste {
             if(lastMine == null)
                 lastMine = targets[ti].getLocation();
             builder.startBuild(true, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
+            timeout = 0;
             state = State.BUILD;
         }
     }
@@ -96,6 +99,9 @@ public class Scout extends Caste {
     @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch(builder.doBuild()) {
+            case WAITING:
+                if(++timeout < TIMEOUT)
+                    break;
             case FAIL:
                 armory = false;
                 lastMine = null;
@@ -120,6 +126,7 @@ public class Scout extends Caste {
                                && myRC.senseTerrainTile(dest) == TerrainTile.LAND) {
                                 nav.setDestination(dest, 1.8);
                                 builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.ARMORY);
+                                timeout = 0;
                                 break;
                             }
 
@@ -139,9 +146,13 @@ public class Scout extends Caste {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private void build_armory() throws GameActionException {
         if(nav.bugNavigate()) {
             switch(builder.doBuild()) {
+            case WAITING:
+                if(++timeout < TIMEOUT)
+                    break;
             case FAIL:
             case DONE:
                 armory = false;
