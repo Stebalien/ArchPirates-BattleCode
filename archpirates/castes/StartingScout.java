@@ -60,7 +60,7 @@ public class StartingScout extends Caste {
                 e.printStackTrace();
             }
 
-            System.out.println(Clock.getBytecodeNum());
+//            System.out.println(Clock.getBytecodeNum());
             myRC.yield();
         }
     }

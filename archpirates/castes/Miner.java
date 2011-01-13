@@ -47,7 +47,7 @@ public class Miner extends Caste {
                 System.out.println("caught exception:");
                 e.printStackTrace();
             }
-            System.out.println(Clock.getBytecodeNum());
+//            System.out.println(Clock.getBytecodeNum());
             myRC.yield();
         }
     }
