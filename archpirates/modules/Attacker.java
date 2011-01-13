@@ -20,7 +20,8 @@ public class Attacker {
 
     // {{{ Cache
     private Robot [] robots;
-    private int round = -1;
+    private double hp;
+    private MapLocation runDest;
     private Robot robot;
     private boolean fired; // Only scan if we have not fired recently.
     // }}}
@@ -49,6 +50,7 @@ public class Attacker {
         this.beams = rp.beams;
         this.team = team;
         this.myRC = rp.myRC;
+        this.hp = myRC.getHitpoints();
         int min_range = 1000;
         int this_range;
         for (WeaponController gun : guns) {
@@ -160,12 +162,13 @@ public class Attacker {
      */
     public MapLocation autoFire() throws GameActionException {
         RobotInfo robotInfo = null, tmpRobotInfo = null;
+        MapLocation myLoc = myRC.getLocation();
+
         int tmpDistSq, minDistSq = 1000;
 
         if (fired && robot != null && sensor.canSenseObject(robot)) {
             robotInfo = sensor.senseRobotInfo(robot);
         } else {
-            MapLocation myLoc = myRC.getLocation();
             robots = sensor.senseNearbyGameObjects(Robot.class);
             robot = null; // will be overwritten anyway but we DEFINITELY don't want this as not null if it is invalid.
 
@@ -193,8 +196,18 @@ public class Attacker {
         // We haven't fired this round and don't know if any guns are active.
         fired = false;
 
-        // Return if nothing is within range
-        if (robotInfo == null) return null;
+        // Return if nothing is within sensor range but return behind if I am being attacked and can't see my attacker.
+        double new_hp = myRC.getHitpoints();
+        if (robotInfo == null) {
+            if (new_hp < hp) {
+                hp = new_hp;
+                if (runDest == null)
+                    runDest = myLoc.add(myRC.getDirection().opposite(), 20);
+                return runDest;
+            } else return null;
+        }
+        hp = new_hp;
+        runDest = null;
 
         for (WeaponController gun : guns) {
             if (!gun.isActive()) {
