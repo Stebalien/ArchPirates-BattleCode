@@ -10,27 +10,25 @@ public class Miner extends Caste {
         BUILD,
         YIELD
     }
-    private State state;
 
     private final Builder builder;
-    private MapLocation loc;
+    private final MapLocation myLoc; // Buildings can't move.
 
-    boolean scout;
+    private boolean scout;
+    private State state;
 
     public Miner(RobotProperties rp){
         super(rp);
 
         state = State.START;
         builder = new Builder(rp);
+        myLoc = myRC.getLocation();
     }
 
     public void SM() {
         while(true) {
             try {
                 switch(state) {
-                    case START:
-                        start();
-                        break;
                     case IDLE:
                         idle();
                         break;
@@ -51,17 +49,33 @@ public class Miner extends Caste {
         }
     }
 
-    private void start() {
-        loc = myRC.getLocation();
-        state = State.IDLE;
-    }
-
     private void idle() throws GameActionException {
         GameObject obj = myRP.sensor.senseObjectAtLocation(loc, RobotLevel.IN_AIR);
         if(obj != null && obj.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo((Robot)obj).on) {
             builder.startBuild(true, loc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
             builder.doBuild();
             state = State.BUILD;
+        }
+    }
+
+    private void build_fighter() {
+        Direction dir = Direction.NORTH;
+        Location loc = null;
+        for (int i = 8; --i > 0;) {
+            if (motor.canMove(loc = myLoc.add(dir = Direction.rotateLeft())))
+                break;
+        }
+        if (loc == null)
+            return
+        switch(builder.startBuild(true, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
+            case ACTIVE:
+            case WAITING:
+                state = State.BUILD;
+                break;
+            case FAIL:
+            default:
+                state = State.IDLE;
+                break;
         }
     }
 
