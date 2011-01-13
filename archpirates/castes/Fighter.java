@@ -42,11 +42,11 @@ public class Fighter extends Caste {
                         state = State.WANDER;
                         break;
                     case WANDER:
-                        if ((path = com.getCommand(bitmask)) != null) {
-                            nav.setDestination(path[path.length-1], 4);
-                            state = State.GOTO;
-                        }
-                        else if ((location = attacker.autoFire()) != null) {
+                        //if ((path = com.getCommand(bitmask)) != null) {
+                        //    nav.setDestination(path[path.length-1], 4);
+                        //    state = State.GOTO;
+                        //} else ...
+                        if ((location = attacker.autoFire()) != null) {
                             nav.setDestination(location, 4);
                             state = State.ATTACK;
                         }
@@ -63,11 +63,15 @@ public class Fighter extends Caste {
                             state = State.ATTACK;
                         break;
                     case ATTACK:
-                        if (path != null)
-                            com.sendCommand(Communicator.ATTACK, path);
-                        if ((location = attacker.autoFire()) != null)
+                        //if (path != null)
+                        //    com.sendCommand(Communicator.ATTACK, path);
+                        
+                        if ((location = attacker.autoFire()) != null) {
                             nav.setDestination(location, 4);
-                        nav.bugNavigate();
+                            nav.bugNavigate();
+                        } else {
+                            state = State.INIT;
+                        }
                         break;
                     case YIELD:
                     default:

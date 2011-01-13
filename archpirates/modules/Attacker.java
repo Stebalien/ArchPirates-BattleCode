@@ -174,7 +174,7 @@ public class Attacker {
                 if (team != r.getTeam())
                     continue;
                 tmpRobotInfo = sensor.senseRobotInfo(r);
-                if ((chassisMask == 0 || (chassisMask & tmpRobotInfo.chassis.ordinal()) != 0)) 
+                if ((chassisMask == 0 || (chassisMask & (1 << tmpRobotInfo.chassis.ordinal())) != 0)) 
                 {
                     // FIXME: see if this is slower/faster. may get rid of withinRange.
                     if (minGun.withinRange(tmpRobotInfo.location)) {
@@ -233,7 +233,7 @@ public class Attacker {
                 if (team != r.getTeam())
                     continue;
                 tmpRobotInfo = sensor.senseRobotInfo(r);
-                if ((chassisMask == 0 || (chassisMask & tmpRobotInfo.chassis.ordinal()) != 0)) 
+                if ((chassisMask == 0 || (chassisMask & (1 << tmpRobotInfo.chassis.ordinal())) != 0)) 
                 {
                     robotInfo = tmpRobotInfo;
                     robot = r;
