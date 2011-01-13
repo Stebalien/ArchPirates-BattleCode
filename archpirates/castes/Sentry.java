@@ -3,39 +3,32 @@ package archpirates.castes;
 import archpirates.modules.*;
 import battlecode.common.*;
 
-public class Scout extends Caste {
+public class Sentry extends Caste {
     private static enum State {
-        INIT,
         WANDER,
-        BUILD,
+        ATTACK,
         YIELD
     }
     private State state;
 
-    private final Builder builder;
-    private Mine[] targets;
-    private int ti;
+    private final Targeter targeter;
 
-    public Scout(RobotProperties rp){
+    public Sentry(RobotProperties rp){
         super(rp);
 
-        state = State.INIT;
-        builder = new Builder(rp);
-        targets = new Mine[10];
+        state = State.WANDER;
+        targeter = new Targeter(rp);
     }
 
     public void SM() {
         while(true) {
             try {
                 switch(state) {
-                    case INIT:
-                        init();
-                        break;
                     case WANDER:
                         wander();
                         break;
-                    case BUILD:
-                        build();
+                    case ATTACK:
+                        attack();
                         break;
                     case YIELD:
                     default:
@@ -52,27 +45,14 @@ public class Scout extends Caste {
         }
     }
 
-
-    private void init() {
-        ti = -1;
-        state = State.WANDER;
-    }
-
+    // FIXME: use targeter to seek enemies within range
     private void wander() throws GameActionException {
-        Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
-        for(Mine m: mines) {
-            if(ti < 9 && myRP.sensor.senseMineInfo(m).roundsLeft == GameConstants.MINE_ROUNDS) {
-                targets[++ti] = m;
-                nav.setDestination(m.getLocation(), 1.5);
-            }
-        }
-
-        if(ti < 0) {
+//        if(ti < 0) {
             if(nav.canMoveForward())
                 nav.move(true);
             else
                 nav.setDirection(myRC.getDirection().opposite().rotateLeft());
-        } else if(nav.bugNavigate()) {
+/*        } else if(nav.bugNavigate()) {
             MapLocation mineLoc = targets[ti].getLocation();
             MapLocation loc = myRC.getLocation();
 
@@ -83,11 +63,12 @@ public class Scout extends Caste {
                 builder.startBuild(true, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
                 state = State.BUILD;
             }
-        }
+        }*/
     }
 
-    private void build() throws GameActionException {
-        switch(builder.doBuild()) {
+    // FIXME: actually attack things
+    private void attack() throws GameActionException {
+/*        switch(builder.doBuild()) {
             case ACTIVE:
             case WAITING:
                 return;
@@ -101,6 +82,6 @@ public class Scout extends Caste {
                     nav.setDestination(new MapLocation(0, 0));
 
                 break;
-        }
+        }*/
     }
 }

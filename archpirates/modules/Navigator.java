@@ -9,7 +9,7 @@ import static battlecode.common.GameConstants.*;
  * Navigtion encapsulates navigating to a destination on the map using simple
  * pathfinding.
  */
-public class Navigation {
+public class Navigator {
     private final RobotController myRC;
     private final RobotProperties myRP;
     private final MovementController motor;
@@ -27,7 +27,7 @@ public class Navigation {
      * @param robot the robot this navigator controls, used to get current location
      * @parm motor the controlle for the motor of this robot
      */
-    public Navigation(RobotProperties rp) {
+    public Navigator(RobotProperties rp) {
         this.myRC = rp.myRC;
         this.myRP = rp;
         this.motor = rp.motor;

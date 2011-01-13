@@ -5,7 +5,6 @@ import battlecode.common.*;
 
 public class Miner extends Caste {
     private static enum State {
-        START,
         IDLE,
         BUILD,
         YIELD
@@ -20,7 +19,7 @@ public class Miner extends Caste {
     public Miner(RobotProperties rp){
         super(rp);
 
-        state = State.START;
+        state = State.IDLE;
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
     }
@@ -52,7 +51,10 @@ public class Miner extends Caste {
     private void idle() throws GameActionException {
         GameObject obj = myRP.sensor.senseObjectAtLocation(myLoc, RobotLevel.IN_AIR);
         if(obj != null && obj.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo((Robot)obj).on) {
-            builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+            if(scout)
+                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+            else
+                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
             builder.doBuild();
             state = State.BUILD;
         }
@@ -81,9 +83,11 @@ public class Miner extends Caste {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
+                scout = !scout;
             case FAIL:
                 state = State.IDLE;
                 break;
