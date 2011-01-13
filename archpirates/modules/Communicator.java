@@ -3,7 +3,7 @@ package archpirates.modules;
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
-public class Communication {
+public class Communicator {
     private final BroadcastController comm;
     private final RobotController myRC;
 
@@ -18,7 +18,7 @@ public class Communication {
      *
      * @param rp The robots RobotProperties.
      */
-    public Communication(RobotProperties rp) {
+    public Communicator(RobotProperties rp) {
         comm = rp.comm;
         myRC = rp.myRC;
     }

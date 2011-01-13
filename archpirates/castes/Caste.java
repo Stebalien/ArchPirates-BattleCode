@@ -1,15 +1,15 @@
 package archpirates.castes;
 
-import archpirates.modules.Navigation;
-import archpirates.modules.Communication;
+import archpirates.modules.Navigator;
+import archpirates.modules.Communicator;
 import archpirates.modules.RobotProperties;
 import battlecode.common.*;
 
 public abstract class Caste {
     protected final RobotController myRC;
     protected final RobotProperties myRP;
-    protected final Navigation nav;
-    protected final Communication com;
+    protected final Navigator nav;
+    protected final Communicator com;
 
     /**
      * Instantiates the abstract caste.
@@ -19,8 +19,8 @@ public abstract class Caste {
     public Caste(RobotProperties rp) {
         myRP = rp;
         myRC = myRP.myRC;
-        nav = new Navigation(myRP);
-        com = new Communication(myRP);
+        nav = new Navigator(myRP);
+        com = new Communicator(myRP);
     }
 
 
@@ -46,7 +46,10 @@ public abstract class Caste {
             case HEAVY:
                 return new Fighter(myRP);
             case FLYING:
-                return new Scout(myRP);
+                if(myRP.builder == null)
+                    return new Sentry(myRP);
+                else
+                    return new Scout(myRP);
             case BUILDING:
                 switch (myRP.builder.type()) {
                     case RECYCLER:
@@ -61,7 +64,7 @@ public abstract class Caste {
         }
     }
     protected void yield() {
-        myRC.yield();
+        // Stub method that simply returns
     }
 
     /**
