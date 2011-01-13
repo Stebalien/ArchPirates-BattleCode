@@ -50,9 +50,9 @@ public class Miner extends Caste {
     }
 
     private void idle() throws GameActionException {
-        GameObject obj = myRP.sensor.senseObjectAtLocation(loc, RobotLevel.IN_AIR);
+        GameObject obj = myRP.sensor.senseObjectAtLocation(myLoc, RobotLevel.IN_AIR);
         if(obj != null && obj.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo((Robot)obj).on) {
-            builder.startBuild(true, loc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+            builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
             builder.doBuild();
             state = State.BUILD;
         }
@@ -60,14 +60,16 @@ public class Miner extends Caste {
 
     private void build_fighter() {
         Direction dir = Direction.NORTH;
-        Location loc = null;
+        MapLocation loc = null;
         for (int i = 8; --i > 0;) {
-            if (motor.canMove(loc = myLoc.add(dir = Direction.rotateLeft())))
+            if (myRP.motor.canMove(dir = dir.rotateLeft())) {
+                loc = myLoc.add(dir);
                 break;
+            }
         }
         if (loc == null)
-            return
-        switch(builder.startBuild(true, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
+            return;
+        switch(builder.startBuild(true, loc, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
             case ACTIVE:
             case WAITING:
                 state = State.BUILD;
