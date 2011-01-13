@@ -13,24 +13,15 @@ public class Targeter {
     private int round = -1;
     private RobotInfo robotInfo;
 
-    private Chassis chassis;
+    private int chassisMask;
     
     /**
-     * Target a robot.
+     * Target a robot on the opposing team.
      *
      * @param rp The properties object describing the current robot.
+     * @param chassis A list of chassis to target.
      */
-    public Targeter(RobotProperties rp) {
-        this(rp, rp.opTeam, null);
-    }
-
-    /**
-     * Target a robot.
-     *
-     * @param rp The properties object describing the current robot.
-     * @param chassis The team that the robot is on.
-     */
-    public Targeter(RobotProperties rp, Chassis chassis) {
+    public Targeter(RobotProperties rp, Chassis... chassis) {
         this(rp, rp.opTeam, chassis);
     }
 
@@ -39,57 +30,33 @@ public class Targeter {
      *
      * @param rp The properties object describing the current robot.
      * @param team The team that the robot is on.
+     * @param chassis A list of chassis to target.
      */
-    public Targeter(RobotProperties rp, Team team) {
-        this(rp, team, null);
-    }
-
-    /**
-     * Target a robot.
-     *
-     * @param rp The properties object describing the current robot.
-     * @param team The team that the robot is on.
-     * @param chassis The chassis to target.
-     */
-    public Targeter(RobotProperties rp, Team team, Chassis chassis) {
+    public Targeter(RobotProperties rp, Team team, Chassis... chassis) {
         this.myRP = rp;
         this.sensor = rp.sensor;
         this.team = team;
         this.myRC = rp.myRC;
-        this.chassis = chassis;
+        setChassis(chassis);
     }
     
 
     /**
      * Set the chassis that this targeter targets.
      * 
-     * @param chassis The chassis.
+     * @param chassis A list of chassis to target.
      */
-    public void setChassis(Chassis chassis) {
-        if (robotInfo != null && robotInfo.chassis != chassis)
-            robotInfo = null;
-        this.chassis = chassis;
+    public void setChassis(Chassis... chassis) {
+        this.chassisMask = 0;
+        if (chassis != null) {
+            for (Chassis c: chassis) {
+                this.chassisMask |= (1 << c.ordinal());
+            }
+            if (robotInfo != null && (robotInfo.chassis.ordinal() & this.chassisMask) == 0)
+                robotInfo = null;
+        }
     }
 
-    /**
-     * Updates the cache.
-     *
-     * @return True if the cache is valid.
-     */
-    private boolean updateCache() throws GameActionException {
-        if (round != (round = Clock.getRoundNum())) { 
-            if (robotInfo != null 
-                && sensor.canSenseObject(robotInfo.robot))
-            {
-                robotInfo = sensor.senseRobotInfo(robotInfo.robot);
-                return true;
-            }
-            robots = sensor.senseNearbyGameObjects(Robot.class);
-        } else if (robotInfo != null)
-            return true;
-        robotInfo = null;
-        return false;
-    }
 
     /**
      * Updates the cache and checks the range of the robot against the range of component.
@@ -117,18 +84,6 @@ public class Targeter {
      * Targets the first robot that it finds.
      *
      * @param component The component that will be firing.
-     * @param chassis The chassis to target.
-     *
-     * @return The RobotInfo of the first robot.
-     */
-    public RobotInfo targetRobot(ComponentController component, Chassis chassis) throws GameActionException {
-        setChassis(chassis);
-        return targetRobot(component);
-    }
-    /**
-     * Targets the first robot that it finds.
-     *
-     * @param component The component that will be firing.
      *
      * @return The RobotInfo of the first robot.
      */
@@ -142,7 +97,7 @@ public class Targeter {
             if (team != r.getTeam())
                 continue;
             robotInfo = sensor.senseRobotInfo(r);
-            if ((chassis == null || chassis == robotInfo.chassis)
+            if ((chassisMask == 0 || (chassisMask & robotInfo.chassis.ordinal()) != 0)
                 && component.withinRange(robotInfo.location))
             {
                 return robotInfo;
@@ -153,64 +108,23 @@ public class Targeter {
     }
 
     /**
-     * Targets the nearest robot or the previously targeted robot if still in range.
+     * Updates the cache.
      *
-     * @param component The component that will be firing.
-     * @param cycles The max number of robots to loop over.
-     * @param chassis The chassis to target.
-     *
-     * @return The RobotInfo of the first robot.
+     * @return True if the cache is valid.
      */
-    public RobotInfo targetNearestRobot(ComponentController component, int cycles, Chassis chassis) throws GameActionException {
-        setChassis(chassis);
-        return targetNearestRobot(component, cycles);
-    }
-
-    /**
-     * Targets the nearest robot or the previously targeted robot if still in range.
-     *
-     * @param component The component that will be firing.
-     * @param cycles The max number of robots to loop over.
-     *
-     * @return The location of the nearest target.
-     */
-    public RobotInfo targetNearestRobot(ComponentController component, int cycles) throws GameActionException {
-
-        // Check the cache
-        if (updateCache(component)) return robotInfo;
-
-        // Setup
-        int nearDistSq = 10000; // Very high number
-        MapLocation myLoc = myRC.getLocation();
-
-        // Find a new target
-        for (int i = 0; i < ((cycles < robots.length) ? cycles : robots.length); i++) {
-            if (team != robots[i].getTeam())
-                continue;
-            RobotInfo tempRobotInfo = sensor.senseRobotInfo(robots[i]);
-            // Only check robot if:
-            // 1. The chassis matches
-            // 2. The robot is within range - Must check every time because of the angle restriction.
-            if ((chassis == null || chassis == tempRobotInfo.chassis) && (component.withinRange(tempRobotInfo.location))) {
-                int distSq = myLoc.distanceSquaredTo(tempRobotInfo.location);
-                if (distSq < nearDistSq) {
-                    robotInfo = tempRobotInfo;
-                    nearDistSq = distSq;
-                }
+    private boolean updateCache() throws GameActionException {
+        if (round != (round = Clock.getRoundNum())) { 
+            if (robotInfo != null 
+                && sensor.canSenseObject(robotInfo.robot))
+            {
+                robotInfo = sensor.senseRobotInfo(robotInfo.robot);
+                return true;
             }
-        }
-        return robotInfo;
-    }
-
-    /**
-     * Targets and follows the first robot it sees.
-     *
-     * @param component The component that will be firing.
-     * @param chassis The chassis we are targeting
-     */
-    public RobotInfo chaseRobot(ComponentController component, Navigation nav, Chassis chassis) throws GameActionException {
-        setChassis(chassis);
-        return chaseRobot(component, nav);
+            robots = sensor.senseNearbyGameObjects(Robot.class);
+        } else if (robotInfo != null)
+            return true;
+        robotInfo = null;
+        return false;
     }
 
     /**
@@ -239,7 +153,7 @@ public class Targeter {
             if (team != r.getTeam())
                 continue;
             robotInfo = sensor.senseRobotInfo(r);
-            if (chassis == null || chassis == robotInfo.chassis) {
+            if ((chassisMask == 0 || (chassisMask & robotInfo.chassis.ordinal()) != 0)) {
                 nav.setDestination(robotInfo.location, 2);
                 if (component.withinRange(robotInfo.location))
                     return robotInfo;

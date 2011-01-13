@@ -24,7 +24,7 @@ public class Fighter extends Caste {
         state = State.INIT;
 
         attacker = new Attack(rp);
-        targeter = new Targeter(myRP, myRP.opTeam, Chassis.BUILDING);
+        targeter = new Targeter(myRP, myRP.opTeam, Chassis.BUILDING, Chassis.LIGHT);
 
         bitmask = ( Communication.ATTACK | Communication.DEFEND );
     }
