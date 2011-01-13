@@ -26,7 +26,7 @@ public class Fighter extends Caste {
         attacker = new Attack(rp);
         targeter = new Targeter(myRP, myRP.opTeam, Chassis.BUILDING);
 
-        bitmask = ( Communication.ATTACK | Communication.DEFEND );
+        bitmask = ( Communicator.ATTACK | Communicator.DEFEND );
     }
     
 
@@ -58,13 +58,13 @@ public class Fighter extends Caste {
                         break;
                     case GOTO:
                         if (path != null)
-                            com.sendCommand(Communication.ATTACK, path[0]);
+                            com.sendCommand(Communicator.ATTACK, path[0]);
                         if (!nav.bugNavigate())
                             state = State.ATTACK;
                         break;
                     case ATTACK:
                         if (path != null)
-                            com.sendCommand(Communication.ATTACK, path[0]);
+                            com.sendCommand(Communicator.ATTACK, path[0]);
                         attacker.autoFire(targeter);
                         //if (!attacker.autoChase(targeter, nav))
                         //    state = State.INIT;

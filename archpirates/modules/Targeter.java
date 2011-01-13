@@ -208,7 +208,7 @@ public class Targeter {
      * @param component The component that will be firing.
      * @param chassis The chassis we are targeting
      */
-    public RobotInfo chaseRobot(ComponentController component, Navigation nav, Chassis chassis) throws GameActionException {
+    public RobotInfo chaseRobot(ComponentController component, Navigator nav, Chassis chassis) throws GameActionException {
         setChassis(chassis);
         return chaseRobot(component, nav);
     }
@@ -218,7 +218,7 @@ public class Targeter {
      *
      * @param component The component that will be firing.
      */
-    public RobotInfo chaseRobot(ComponentController component, Navigation nav) throws GameActionException {
+    public RobotInfo chaseRobot(ComponentController component, Navigator nav) throws GameActionException {
         boolean navigate = nav.bugNavigate();
         // Check ctrueache
         if (updateCache()) {

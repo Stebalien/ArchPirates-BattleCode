@@ -103,7 +103,7 @@ public class Attack {
         return false;
     }
 
-    public boolean autoChase(Targeter targeter, Navigation nav) throws GameActionException {
+    public boolean autoChase(Targeter targeter, Navigator nav) throws GameActionException {
         RobotInfo info = null;
         ComponentType type = null;
         boolean active = nav.bugNavigate();

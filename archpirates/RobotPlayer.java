@@ -1,14 +1,7 @@
 package archpirates;
 
-import archpirates.modules.RobotProperties;
-import archpirates.modules.Attack;
-import archpirates.modules.Targeter;
-import archpirates.modules.Builder;
-import archpirates.modules.TaskState;
-import archpirates.modules.Navigation;
-import archpirates.modules.MessageID;
-
 import archpirates.castes.Caste;
+import archpirates.modules.MessageID;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
