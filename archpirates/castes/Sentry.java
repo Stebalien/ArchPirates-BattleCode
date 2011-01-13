@@ -45,43 +45,28 @@ public class Sentry extends Caste {
         }
     }
 
-    // FIXME: use targeter to seek enemies within range
     private void wander() throws GameActionException {
-//        if(ti < 0) {
-            if(nav.canMoveForward())
-                nav.move(true);
-            else
-                nav.setDirection(myRC.getDirection().opposite().rotateLeft());
-/*        } else if(nav.bugNavigate()) {
-            MapLocation mineLoc = targets[ti].getLocation();
-            MapLocation loc = myRC.getLocation();
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            nav.bugNavigate();
+            state = State.ATTACK;
+            return;
+        }
 
-            if(mineLoc.equals(loc)) {
-                if(nav.canMoveBackward())
-                    nav.move(false);
-            } else {
-                builder.startBuild(true, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
-                state = State.BUILD;
-            }
-        }*/
+        if(nav.canMoveForward())
+            nav.move(true);
+        else
+            nav.setDirection(myRC.getDirection().opposite().rotateRight());
     }
 
-    // FIXME: actually attack things
     private void attack() throws GameActionException {
-/*        switch(builder.doBuild()) {
-            case ACTIVE:
-            case WAITING:
-                return;
-            case FAIL:
-            case DONE:
-                state = State.WANDER;
-                ti--;
-                if(ti > -1)
-                    nav.setDestination(targets[ti].getLocation(), 1.9);
-                else
-                    nav.setDestination(new MapLocation(0, 0));
+        MapLocation l = attacker.autoFire();
+        if(l == null)
+            state = State.WANDER;
+        else
+            nav.setDestination(l, 3);
 
-                break;
-        }*/
+        nav.bugNavigate();
     }
 }

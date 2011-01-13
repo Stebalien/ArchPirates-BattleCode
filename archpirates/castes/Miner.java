@@ -9,12 +9,14 @@ public class Miner extends Caste {
         BUILD,
         YIELD
     }
+    private static final int MAX_SCOUTS = 5;
 
     private final Builder builder;
     private final MapLocation myLoc; // Buildings can't move.
 
     private boolean scout;
     private State state;
+    private int scouts;
 
     public Miner(RobotProperties rp){
         super(rp);
@@ -22,6 +24,8 @@ public class Miner extends Caste {
         state = State.IDLE;
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
+
+        scout = true;
     }
 
     public void SM() {
@@ -87,7 +91,12 @@ public class Miner extends Caste {
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
-                scout = !scout;
+                if(scout) {
+                    scouts++;
+                    scout = false;
+                } else if(scouts < MAX_SCOUTS) {
+                    scout = true;
+                }
             case FAIL:
                 state = State.IDLE;
                 break;
