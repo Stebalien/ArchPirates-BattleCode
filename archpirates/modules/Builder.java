@@ -4,7 +4,7 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
 public class Builder {
-    private static double MULT = 1.5; // We need at least MULT * RESOURCES to build.
+    private static double MULT = 1.2; // We need at least MULT * RESOURCES to build.
 
     private final BuilderController builder;
     private final RobotController myRC;

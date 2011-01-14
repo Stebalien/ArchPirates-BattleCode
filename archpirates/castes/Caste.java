@@ -51,13 +51,17 @@ public abstract class Caste {
                 else
                     return new Scout(myRP);
             case BUILDING:
-                switch (myRP.builder.type()) {
-                    case RECYCLER:
-                        return new Miner(myRP);
-                    case ARMORY:
-                        return new Armory(myRP);
-                    default:
-                        return new Fighter(myRP);
+                if(myRP.builder != null) {
+                    switch (myRP.builder.type()) {
+                        case RECYCLER:
+                            return new Miner(myRP);
+                        case ARMORY:
+                            return new Armory(myRP);
+                        default:
+                            return new Tower(myRP);
+                    }
+                } else {
+                    return new Tower(myRP);
                 }
             default:
                 return new Fighter(myRP);

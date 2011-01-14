@@ -17,7 +17,8 @@ public class Scout extends Caste {
     private final Builder builder;
     private Mine[] targets;
     private boolean armory;
-    private MapLocation lastMine;
+    private MapLocation lastMine,
+                        towerLoc;
     private int ti,
                 timeout;
 
@@ -113,32 +114,37 @@ public class Scout extends Caste {
                     nav.setDestination(new MapLocation(0, 0));
 
                     if(armory) {
-                        System.out.println("##### BUILD AN ARMORY #######");
-
                         MapLocation l1 = targets[0].getLocation();
-                        System.out.println("Two locations: " + l1 + ", and " + lastMine);
 
-                        Direction d = Direction.NORTH;
-                        while(d != Direction.NORTH_EAST) {
+                        Direction term = lastMine.directionTo(l1);
+                        Direction d = term.rotateLeft();
+
+                        armory = false;
+                        while(d != term && (towerLoc == null || armory)) {
                             MapLocation dest = lastMine.add(d);
                             if(!dest.equals(l1)
-                               && dest.isAdjacentTo(l1)
                                && myRC.senseTerrainTile(dest) == TerrainTile.LAND) {
-                                nav.setDestination(dest, 1.8);
-                                builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.ARMORY);
-                                timeout = 0;
-                                break;
+                                if(!armory && dest.isAdjacentTo(l1)) {
+                                    nav.setDestination(dest, 1.8);
+                                    builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.ARMORY);
+                                    timeout = 0;
+                                    armory = true;
+                                } else if(!lastMine.directionTo(dest).isDiagonal()) {
+                                    towerLoc = dest;
+                                }
                             }
 
                             d = d.rotateLeft();
                         }
 
-                        if(d != Direction.NORTH_EAST) {
+                        if(armory) {
+                            armory = false;
                             state = State.BUILD_ARMORY;
                             return;
                         }
                     }
                 }
+                towerLoc = null;
                 state = State.WANDER;
                 break;
             default:
@@ -154,10 +160,16 @@ public class Scout extends Caste {
                 if(++timeout < TIMEOUT)
                     break;
             case FAIL:
+                towerLoc = null;
             case DONE:
-                armory = false;
-                lastMine = null;
-                state = state.WANDER;
+                if(towerLoc != null) {
+                    builder.startBuild(false, towerLoc, Chassis.BUILDING);
+                    towerLoc = null;
+                    timeout = 0;
+                } else {
+                    state = state.WANDER;
+                    lastMine = null;
+                }
                 break;
             default:
                 break;

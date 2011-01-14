@@ -11,7 +11,7 @@ public class Armory extends Caste {
         DELAY,
         YIELD
     }
-    private static final int COOLDOWN = 150;
+    private static final int COOLDOWN = 125;
     private State state;
 
     private final Builder builder;

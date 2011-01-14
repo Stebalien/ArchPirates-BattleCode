@@ -9,7 +9,7 @@ public class Miner extends Caste {
         BUILD,
         YIELD
     }
-    private static final int MAX_SCOUTS = 5,
+    private static final int MAX_SCOUTS = 3,
                              TIMEOUT = 500;
 
     private final Builder builder;
@@ -60,14 +60,36 @@ public class Miner extends Caste {
             myRC.turnOff();
         }
 
-        GameObject obj = myRP.sensor.senseObjectAtLocation(myLoc, RobotLevel.IN_AIR);
-        if(obj != null && obj.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo((Robot)obj).on) {
-            if(scout)
-                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
-            else
-                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG);
-            builder.doBuild();
-            state = State.BUILD;
+        Robot[] nearby = myRP.sensor.senseNearbyGameObjects(Robot.class);
+        for(Robot r: nearby) {
+            if(r != null && r.getTeam() == myRP.myTeam) {
+                RobotInfo ri = myRP.sensor.senseRobotInfo(r);
+                if(!ri.on) {
+                    switch(ri.chassis) {
+                    case FLYING:
+                        if(ri.location.equals(myLoc)) {
+                            if(scout)
+                                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+                            else
+                                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.ANTENNA, ComponentType.RADAR, ComponentType.SMG);
+                            builder.doBuild();
+                            state = State.BUILD;
+                            return;
+                        }
+                        break;
+                    case BUILDING:
+                        if(scouts > 0 && myLoc.isAdjacentTo(ri.location) && !myLoc.directionTo(ri.location).isDiagonal() && myRP.sensor.senseObjectAtLocation(ri.location, RobotLevel.MINE) == null) {
+                            builder.startBuild(true, ri.location, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER);
+                            builder.doBuild();
+                            state = State.BUILD;
+                            return;
+                        }
+                        break;
+                    default:
+                        continue;
+                    }
+                }
+            }
         }
     }
 
