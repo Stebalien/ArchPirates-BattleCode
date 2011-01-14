@@ -30,7 +30,7 @@ public class Fighter extends Caste {
 
     @SuppressWarnings("fallthrough")
     public void SM() {
-        MapLocation [] path = null;
+        MapLocation destination = null;
         MapLocation location = null;
         while(true) {
             try {
@@ -42,8 +42,8 @@ public class Fighter extends Caste {
                         state = State.WANDER;
                         break;
                     case WANDER:
-                        //if ((path = com.getCommand(bitmask)) != null) {
-                        //    nav.setDestination(path[path.length-1], 4);
+                        //if (com.recieve(bitmask)) {
+                        //    nav.setDestination(destination = com.getDestination(), 4);
                         //    state = State.GOTO;
                         //} else ...
                         if ((location = attacker.autoFire()) != null) {
@@ -57,14 +57,14 @@ public class Fighter extends Caste {
                         break;
                     case GOTO:
                         attacker.autoFire();
-                        if (path != null)
-                            com.sendCommand(Communicator.ATTACK, path);
+                        if (destination != null)
+                            com.send(Communicator.ATTACK, destination);
                         if (!nav.bugNavigate())
                             state = State.ATTACK;
                         break;
                     case ATTACK:
-                        //if (path != null)
-                        //    com.sendCommand(Communicator.ATTACK, path);
+                        //if (destination != null)
+                        //    com.send(Communicator.ATTACK, destination);
                         
                         if ((location = attacker.autoFire()) != null) {
                             nav.setDestination(location, 4);

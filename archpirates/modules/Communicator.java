@@ -12,6 +12,10 @@ public class Communicator {
     public static final int DEFEND = 4;
     public static final int HEAL = 8;
 
+    // Cache
+    private int mask;
+    private MapLocation [] path;
+
 
     /**
      * Facilitates communication to and from this robot.
@@ -30,7 +34,7 @@ public class Communicator {
      * @param path The path to the destination.
      * @return true if the message was sent. 
      */
-    public boolean sendCommand(int bitmask, MapLocation... path) throws GameActionException {
+    public boolean send(int bitmask, MapLocation... path) throws GameActionException {
         if (comm == null || comm.isActive()) return false;
 
         Message message = new Message();
@@ -59,19 +63,17 @@ public class Communicator {
      *          8 - Heal
      *
      * @param bitmask The bitmask that must match the command.
-     * @return A path to the destination.
+     * @return true if a message was recieved.
      */
-    public MapLocation [] getCommand(int bitmask) {
+    public boolean recieve(int bitmask) {
         int round = Clock.getRoundNum();
         int id_prev = MessageID.get(round - 1);
         int id_now = MessageID.get(round);
 
         // Cache values for faster lookup
         int loc_length; // Length of the locations array
-        int mask;
         int [] ints;
         int myloc_length;
-        MapLocation [] path;
         MapLocation [] locations;
 
         read_message:
@@ -107,8 +109,38 @@ public class Communicator {
                     continue read_message;
                 path[--myloc_length] = locations[loc_length];
             } while ( loc_length != 0 );
-            return path;
+            return true;
         }
-        return null;
+
+        path = null;
+        mask = 0;
+        return false;
+    }
+
+    /**
+     * Gets the command bitmask for the last message.
+     * @return The last message's bitmask.
+     */
+    public int getCommand() {
+        return mask;
+    }
+
+    /**
+     * Gets the path for the last message.
+     * @return The last message's path.
+     */
+    public MapLocation [] getPath() {
+        return path;
+    }
+
+    /**
+     * Gets the destination for the last message.
+     * @return The last message's destination.
+     */
+    public MapLocation getDestination() {
+        if (path != null && path.length >= 1)
+            return path[path.length-1];
+        else
+            return null;
     }
 }
