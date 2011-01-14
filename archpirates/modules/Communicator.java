@@ -14,7 +14,7 @@ public class Communicator {
 
     // Cache
     private int mask;
-    private MapLocation [] path;
+    private MapLocation destination;
     private MapLocation source;
     private Message last_message;
 
@@ -25,7 +25,7 @@ public class Communicator {
      * Message format:
      *   ints: (round-id) (bitmask + bitmask) (distance from source to last ^2) (distance from source to last ^2) (rebroadcast num) (rebroadcast num)
      *   Strings: null
-     *   MapLocations: [(path) (path)]... (dest) (dest) (source) (source)
+     *   MapLocations: (source) (source) (dest) (dest)
      *
      * @param rp The robots RobotProperties.
      */
@@ -50,7 +50,7 @@ public class Communicator {
     // null separrated. TODO <<<<<<!!!!!!!!!!!!!!!!>>>>>>>>>>>>>>>>>>>>>>>> THIS IS IT FIXME TODO THIS GOOD!! Nulls are free
     //
     // ints: (round-id) [(mask+mask) (distance from source to last ^2) (distance from source to last ^2) (rebroadcast-rounds) (rebroadcast-rounds)] (null) [repeat...]
-    // locations: [[(path) (path)]... (dest) (dest) (source) (source)] (null) [repeat...]
+    // locations: [(source) (source) (dest) (dest)] (null) [repeat...]
     /**
      * Relays the cached message if there is one and we should relay it.
      *
@@ -74,11 +74,11 @@ public class Communicator {
      * Sends out a command to robots within range.
      *
      * @param bitmask The bitmask that describes the robots that should recieve this message.
-     * @param path The path to the destination.
+     * @param destination The destination.
      * @return true if the message was sent.
      */
-    public boolean send(int bitmask, int rebroadcast, MapLocation... path) throws GameActionException {
-        if (comm == null || comm.isActive() || path == null || path.length == 0) return false;
+    public boolean send(int bitmask, int rebroadcast, MapLocation destination) throws GameActionException {
+        if (comm == null || comm.isActive() || destination == null) return false;
 
         Message message = new Message();
 
@@ -88,14 +88,9 @@ public class Communicator {
         message.ints[2] = message.ints[3] = 0;
         message.ints[4] = message.ints[5] = rebroadcast;
 
-        int path_length = path.length;
-        int loc_length = ((path_length+1) * 2); // The length of the locations array includes the source
-        message.locations = new MapLocation [loc_length];
-        message.locations[--loc_length] = message.locations[--loc_length] = myRC.getLocation(); // The last two items in the path are the source
-
-        do {
-            message.locations[--loc_length] = message.locations[--loc_length] = path[--path_length];
-        } while (path_length > 0);
+        message.locations = new MapLocation [4];
+        message.locations[0] = message.locations[1] = myRC.getLocation();
+        message.locations[2] = message.locations[3] = destination;
 
         comm.broadcast(message);
         return true;
@@ -118,10 +113,7 @@ public class Communicator {
         int id_prev = MessageID.get(id_now - 1);
         id_now = MessageID.get(id_now);
 
-        // Cache values for faster lookup
-        int loc_length; // Length of the locations array
         int [] ints;
-        int path_length;
         MapLocation [] locations;
 
         read_message:
@@ -133,10 +125,7 @@ public class Communicator {
             // 5. The the bitmask must be doubled.
             // 6. The mask must match the passed bitmask.
             // 7. The rebroadcast must be doubled and greater than or equal to 0.
-            // 8. locations needs at least 4 items (source/dest). This step also records the length
-            //    of the locations array.
-            // 9. Return if the location list is too long.
-            //10. The locations array must be even.
+            // 8. locations needs at least 4 items (source/dest).
             if (  (ints = m.ints) == null
                || (locations = m.locations) == null
                || ints.length != 6
@@ -148,33 +137,25 @@ public class Communicator {
                ||!(  ints[4] == ints[5]
                   && ints[4] >= 0
                   )
-               || (loc_length = locations.length) < 4
-               || loc_length > 40
-               || (loc_length & 1) != 0
+               || locations.length != 4
                 ) continue read_message;
 
-            path_length = ((loc_length >> 1) - 1); //The length of the path is 1/2 of the length of the locations array  and minus 1 for the source
-            path = new MapLocation[path_length];
 
             // Get the source if valid
-            if (!locations[--loc_length].equals(locations[--loc_length]))
+            if (!locations[0].equals(source = locations[1]))
                 continue read_message;
-            source = locations[loc_length];
 
-            // do...while to save bytecode (we know that the length > 0)
-            do {
-                if (!locations[--loc_length].equals(locations[--loc_length]))
-                    continue read_message;
-                path[--path_length] = locations[loc_length];
-            } while ( loc_length > 0 );
+            if (!locations[2].equals(destination = locations[3]))
+                continue read_message;
 
-            last_message = m; // cache the message
+            last_message = m;
             return true;
         }
 
         source = null;
         last_message = null;
-        path = null;
+        source = null;
+        destination = null;
         mask = 0;
         return false;
     }
@@ -185,14 +166,6 @@ public class Communicator {
      */
     public int getCommand() {
         return mask;
-    }
-
-    /**
-     * Gets the path for the last message.
-     * @return The last message's path.
-     */
-    public MapLocation [] getPath() {
-        return path;
     }
 
     /**
@@ -208,9 +181,6 @@ public class Communicator {
      * @return The last message's destination.
      */
     public MapLocation getDestination() {
-        if (path != null && path.length >= 1)
-            return path[path.length-1];
-        else
-            return null;
+        return destination;
     }
 }
