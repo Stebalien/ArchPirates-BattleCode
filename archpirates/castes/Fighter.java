@@ -58,7 +58,7 @@ public class Fighter extends Caste {
                     case GOTO:
                         attacker.autoFire();
                         if (destination != null)
-                            com.send(Communicator.ATTACK, destination);
+                            com.send(Communicator.ATTACK, 1, destination);
                         if (!nav.bugNavigate())
                             state = State.ATTACK;
                         break;

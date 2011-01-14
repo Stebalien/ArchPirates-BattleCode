@@ -38,7 +38,7 @@ public class RobotProperties {
                 case WEAPON:
                     if (type == ComponentType.BEAM)
                         tmp_beams[c_beams++] = (WeaponController)comp;
-                    else 
+                    else
                         tmp_guns[c_guns++] = (WeaponController)comp;
                     break;
                 case SENSOR:

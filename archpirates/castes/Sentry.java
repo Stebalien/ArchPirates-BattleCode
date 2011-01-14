@@ -56,13 +56,14 @@ public class Sentry extends Caste {
     private void wander() throws GameActionException {
         MapLocation l;
         if((l = attacker.autoFire()) != null) {
-            com.send(Communicator.ATTACK, new MapLocation[] {l});
+            com.send(Communicator.ATTACK, 1, l);
             nav.setDestination(l, 3);
             nav.bugNavigate();
             state = State.ATTACK;
             return;
         } else if(com.recieve(bitmask)) {
-            assistLoc = com.getPath()[com.getPath().length-1];
+            assistLoc = com.getDestination();
+            com.relay();
             nav.setDestination(assistLoc, 3);
             nav.bugNavigate();
             state = State.ASSIST;

@@ -69,7 +69,7 @@ public class Attacker {
     // {{{ Set Settings
     /**
      * Set the chassis that will be targeted.
-     * 
+     *
      * @param chassis A list of chassis to target.
      */
     public void setChassis(Chassis... chassis) {
@@ -84,7 +84,7 @@ public class Attacker {
 
     /**
      * Set the team that will be targeted.
-     * 
+     *
      * @param team the team that will be targeted.
      */
     public void setTeam(Team team) {
