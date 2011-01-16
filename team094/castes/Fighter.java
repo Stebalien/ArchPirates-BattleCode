@@ -1,6 +1,6 @@
-package archpirates.castes;
+package team094.castes;
 
-import archpirates.modules.*;
+import team094.modules.*;
 import battlecode.common.*;
 
 public class Fighter extends Caste {

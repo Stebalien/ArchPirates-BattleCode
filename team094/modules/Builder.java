@@ -1,4 +1,4 @@
-package archpirates.modules;
+package team094.modules;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;

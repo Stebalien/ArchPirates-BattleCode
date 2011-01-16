@@ -1,8 +1,8 @@
-package archpirates.castes;
+package team094.castes;
 
-import archpirates.modules.Navigator;
-import archpirates.modules.Communicator;
-import archpirates.modules.RobotProperties;
+import team094.modules.Navigator;
+import team094.modules.Communicator;
+import team094.modules.RobotProperties;
 import battlecode.common.*;
 
 public abstract class Caste {

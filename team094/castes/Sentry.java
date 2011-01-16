@@ -1,6 +1,6 @@
-package archpirates.castes;
+package team094.castes;
 
-import archpirates.modules.*;
+import team094.modules.*;
 import battlecode.common.*;
 
 public class Sentry extends Caste {
@@ -14,7 +14,8 @@ public class Sentry extends Caste {
 
     private final Attacker attacker;
     private MapLocation assistLoc;
-    private int bitmask;
+    private int bitmask,
+                broadcastDelay;
 
     public Sentry(RobotProperties rp){
         super(rp);
@@ -56,7 +57,6 @@ public class Sentry extends Caste {
     private void wander() throws GameActionException {
         MapLocation l;
         if((l = attacker.autoFire()) != null) {
-            com.send(Communicator.ATTACK, 1, l);
             nav.setDestination(l, 3);
             nav.bugNavigate();
             state = State.ATTACK;
@@ -85,10 +85,16 @@ public class Sentry extends Caste {
 
     private void attack() throws GameActionException {
         MapLocation l = attacker.autoFire();
-        if(l == null)
+        if(l == null) {
+            broadcastDelay = 0;
             state = State.WANDER;
-        else
+        } else {
+            if(++broadcastDelay >= 10) {
+                broadcastDelay = 0;
+                com.send(Communicator.ATTACK, 5, l);
+            }
             nav.setDestination(l, 3);
+        }
 
         nav.bugNavigate();
     }

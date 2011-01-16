@@ -1,7 +1,7 @@
-package archpirates;
+package team094;
 
-import archpirates.castes.Caste;
-import archpirates.modules.MessageID;
+import team094.castes.Caste;
+import team094.modules.MessageID;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;

@@ -1,6 +1,6 @@
-package archpirates.modules;
+package team094.modules;
 
-import archpirates.modules.RobotProperties;
+import team094.modules.RobotProperties;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
