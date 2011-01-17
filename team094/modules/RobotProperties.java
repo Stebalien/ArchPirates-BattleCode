@@ -5,6 +5,7 @@ import battlecode.common.*;
 public class RobotProperties {
 	public final RobotController myRC;
     public final Team myTeam, opTeam;
+    public final int DIST_MULTIPLIER;
 
     public ComponentController [] components;
     public WeaponController [] guns, beams;
@@ -23,6 +24,22 @@ public class RobotProperties {
         myRC = rc;
         myTeam = myRC.getTeam();
         opTeam = myTeam.opponent();
+        switch(myRC.getChassis()) {
+            case HEAVY:
+                DIST_MULTIPLIER = 10;
+                break;
+            case MEDIUM:
+                DIST_MULTIPLIER = 6;
+                break;
+            case LIGHT:
+                DIST_MULTIPLIER = 3;
+                break;
+            case FLYING:
+                DIST_MULTIPLIER = 1;
+                break;
+            default:
+                DIST_MULTIPLIER = 0;
+        }
         update();
     }
     public void update() {

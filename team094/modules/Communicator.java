@@ -6,33 +6,45 @@ import static battlecode.common.GameConstants.*;
 public class Communicator {
     private final BroadcastController comm;
     private final RobotController myRC;
+    private final int DM;
 
+    public static final int NONE = 0;
     public static final int ATTACK = 1;
     public static final int ATTACK_BUILDING = 2;
     public static final int DEFEND = 4;
     public static final int HEAL = 8;
-    public static final int BASE = 16;
 
     // Cache
     private int mask;
     private MapLocation destination;
-    private MapLocation source;
-    private Message last_message;
+    private Message [] messages;
+    private int length;
 
 
     /**
      * Facilitates communication to and from this robot.
      *
      * Message format:
-     *   ints: (round-id) (bitmask + bitmask) (distance from source to last ^2) (distance from source to last ^2) (rebroadcast num) (rebroadcast num)
-     *   Strings: null
-     *   MapLocations: (source) (source) (dest) (dest)
+     *   ints: (round-id) [(checksum) (mask) (rank) (distance from source to last ^2) (rebroadcast-rounds)] [repeat...]
+     *   strings: null
+     *   locations: [(source) (dest)] [repeat...]
+     *
+     * Checksum:
+     *     (rebroadcast-rounds)
+     *     ^(distance from source to last ^2 &lt;&lt; 1)
+     *     ^(rank &lt;&lt; 2)
+     *     ^(mask &lt;&lt; 3)
+     *     ^(destination_location &lt;&lt; 4)
+     *     ^(source_location &lt;&lt; 5)
+     *
      *
      * @param rp The robots RobotProperties.
      */
     public Communicator(RobotProperties rp) {
         comm = rp.comm;
         myRC = rp.myRC;
+        DM = rp.DIST_MULTIPLIER;
+        messages = new Message [] {};
     }
 
     /**
@@ -41,64 +53,100 @@ public class Communicator {
      * @return true if messages were cleared.
      */
     public boolean clear() {
+        messages = null;
+        length = 0;
+        mask = 0;
+        destination = null;
         return myRC.getAllMessages().length > 0;
     }
 
 
-    //TODO: This is not finished, we should relay messages even if it was not destined for us.
-    // maybe expand message/two messages in one.
-    //
-    // null separrated. TODO <<<<<<!!!!!!!!!!!!!!!!>>>>>>>>>>>>>>>>>>>>>>>> THIS IS IT FIXME TODO THIS GOOD!! Nulls are free
-    //
-    // ints: (round-id) [(mask+mask) (distance from source to last ^2) (distance from source to last ^2) (rebroadcast-rounds) (rebroadcast-rounds)] (null) [repeat...]
-    // locations: [(source) (source) (dest) (dest)] (null) [repeat...]
     /**
      * Relays the cached message if there is one and we should relay it.
      *
      * @return true if we relayed the message
      */
-    public boolean relay() throws GameActionException {
-        if (last_message != null && comm != null && !comm.isActive() && last_message.ints[4]-- > 0) {
-            int distance = source.distanceSquaredTo(myRC.getLocation());
-            if (distance > last_message.ints[2]) {
-                last_message.ints[2] = last_message.ints[3] = distance; // Set both distances
-                last_message.ints[5]--; //decriment the other round counter
-                last_message.ints[0] = MessageID.get(Clock.getRoundNum()); // set the message id
-                comm.broadcast(last_message);
-                return true;
-            }
-        }
-        return false;
+    public boolean send() throws GameActionException {
+        return send(0,0,0,null);
+
     }
 
     /**
      * Sends out a command to robots within range.
      *
-     * @param bitmask The bitmask that describes the robots that should recieve this message.
+     * @param bitmask The bitmask that describes the robots that should receive this message.
+     * @param rank The rank of the situation
      * @param destination The destination.
      * @return true if the message was sent.
      */
-    public boolean send(int bitmask, int rebroadcast, MapLocation destination) throws GameActionException {
-        if (comm == null || comm.isActive() || destination == null) return false;
+    public boolean send(int bitmask, int rank, int rebroadcast, MapLocation destination) throws GameActionException {
+        if (comm == null || comm.isActive() || (length == 0 && destination == null)) return false;
 
         Message message = new Message();
+        int locs_length, ints_length;
 
-        message.ints = new int [6];
+        if (destination != null) {
+            message.ints = new int [ints_length = (length*5)+6];
+            message.ints[2] = bitmask;
+            message.ints[3] = rank;
+            message.ints[4] = 0; //distance from source
+            message.ints[5] = rebroadcast;
+
+            message.locations = new MapLocation [locs_length = length*2 + 2];
+            message.locations[0] = myRC.getLocation();
+            message.locations[1] = destination;
+
+            message.ints[1] = (message.ints[5] ^ (message.ints[4]<<1) ^ (message.ints[3]<<2) ^ (message.ints[2]<<3) ^ (message.locations[1].hashCode()<<4) ^ (message.locations[0].hashCode()<<5));
+        } else {
+            message.ints = new int [ints_length = length*5+1];
+            message.locations = new MapLocation [locs_length = length*2];
+        }
+        if (messages != null) {
+            for (int i = messages.length; --i > 0; ) {
+                if (messages[i] == null) continue;
+                int ml_length = messages[i].locations.length - 1;
+                int mi_length = messages[i].ints.length - 1;
+                // Can be a do while because all messages that are too short = null
+                do {
+                    if (messages[i].ints[mi_length] < 0) {
+                        ml_length -= 2;
+                        mi_length -= 5;
+                        continue;
+                    }
+
+                    message.ints[--ints_length] = messages[i].ints[mi_length--];
+                    message.ints[--ints_length] = messages[i].ints[mi_length--];
+                    message.ints[--ints_length] = messages[i].ints[mi_length--];
+                    message.ints[--ints_length] = messages[i].ints[mi_length--];
+                    message.ints[--ints_length] = messages[i].ints[mi_length--];
+
+                    message.locations[--locs_length] = messages[i].locations[ml_length--];
+                    message.locations[--locs_length] = messages[i].locations[ml_length--];
+                } while (ml_length > 0);
+            }
+        }
+        messages = null;
+        length = 0;
+
+        // Put this at the end to guarentee that the round number is correct.
         message.ints[0] = MessageID.get(Clock.getRoundNum());
-        message.ints[1] = bitmask + (bitmask << 16);
-        message.ints[2] = message.ints[3] = 0;
-        message.ints[4] = message.ints[5] = rebroadcast;
-
-        message.locations = new MapLocation [4];
-        message.locations[0] = message.locations[1] = myRC.getLocation();
-        message.locations[2] = message.locations[3] = destination;
-
         comm.broadcast(message);
         return true;
     }
 
     /**
-     * Gets the first matching command message.
+     * Parses incomming messages but does not pick one out for use.
+     * This method also parses all other messages and prepares them for the send method it MUST be called before send.
+     *
+     * @return false
+     */
+    public boolean receive() {
+        return receive(0);
+    }
+
+    /**
+     * Gets the highest ranked command matching bitmask.
+     * This method also parses all other messages and prepares them for the send method it MUST be called before send.
      *
      * Bitmask: 1 - Attack
      *          2 - Attack Building
@@ -107,7 +155,7 @@ public class Communicator {
      *         16 - Base
      *
      * @param bitmask The bitmask that must match the command.
-     * @return true if a message was recieved.
+     * @return true if a message was chosen.
      */
     public boolean receive(int bitmask) {
         // Do this so that both id_now and id_prev are stored in constants. (saves a bytecode per lookup and one here)
@@ -117,9 +165,24 @@ public class Communicator {
 
         int [] ints;
         MapLocation [] locations;
+        MapLocation myLoc = myRC.getLocation();
 
-        read_message:
-        for (Message m : myRC.getAllMessages()) {
+        int locs_length;
+        int ints_length;
+        //saves bytecode if we don't care about parsing a message
+        int high_rank;
+        if (bitmask == 0)
+            high_rank = -1000;
+        else
+            high_rank = 10000;
+        int distance;
+        messages = myRC.getAllMessages();
+        int message_count = messages.length;
+        length = 0;
+        int csCache; // Checksum cache;
+
+    read:
+        while (--message_count > 0) {
             // 1. Check if ints is null.
             // 2. Check if locations is null.
             // 3. ints needs 6 items.
@@ -127,39 +190,69 @@ public class Communicator {
             // 5. The the bitmask must be doubled.
             // 6. The mask must match the passed bitmask.
             // 7. The rebroadcast must be doubled and greater than or equal to 0.
-            // 8. locations needs at least 4 items (source/dest).
-            if (  (ints = m.ints) == null
-               || (locations = m.locations) == null
-               || ints.length != 6
+            // 8. locations needs at least 2 items (source/dest).
+            if (  (ints = messages[message_count].ints) == null
+               || (locations = messages[message_count].locations) == null
+               || (ints_length = ints.length) < 4
                ||!(  ints[0] == id_now
                   || ints[0] == id_prev
                   )
-               || (mask = (char)ints[1]) != (ints[1]>>>16)
-               || ((char)bitmask & mask) == 0
-               ||!(  ints[4] == ints[5]
-                  && ints[4] >= 0
-                  )
-               || locations.length != 4
-                ) continue read_message;
+               || (locs_length = locations.length) < 2
+               || (locs_length & 1) != 0
+               || (ints_length - 1) % 5 != 0
+                )
+            {
+                messages[message_count] = null;
+                continue read;
+            }
 
 
-            // Get the source if valid
-            if (!locations[0].equals(source = locations[1]))
-                continue read_message;
+            // There is a reason for every decriment etc. in here.
+            // You may even be able to decypher my reasons if you
+            // stare at it long enough... (think: "the index must always be valid")
+            // ...but I recommend that you don't do that...the horror...the horror...
 
-            if (!locations[2].equals(destination = locations[3]))
-                continue read_message;
+            do {
+                if (locations[locs_length-1] == null || locations[locs_length-2] == null)
+                {
+                    messages[message_count].ints[ints_length-1] = -1;
+                    ints_length -= 5;
+                    continue;
+                } else if ((ints[--ints_length]
+                       ^(ints[--ints_length]<<1)
+                       ^(csCache = ((ints[--ints_length]<<2)
+                       ^(ints[--ints_length]<<3)
+                       ^(locations[--locs_length].hashCode()<<4)
+                       ^(locations[--locs_length].hashCode()<<5))))
+                      !=ints[--ints_length]
+                      )
+                {
+                    messages[message_count].ints[ints_length+4] = -1;
+                    continue;
+                }
 
-            last_message = m;
-            return true;
+
+                if (--ints[ints_length+4] >= 0 && ints[ints_length+3] < (ints[ints_length+3] = myLoc.distanceSquaredTo(locations[locs_length]))) {
+                    length++;
+                    ints[ints_length] = ints[ints_length+4]^(ints[ints_length+3]<<1)^csCache;
+                } else {
+                    ints[ints_length+4] = -1;
+                }
+
+                if ((ints[ints_length+2] - ints[ints_length+3]*DM) > high_rank && (bitmask & ints[ints_length+1]) != 0) {
+                    high_rank = ints[ints_length+2] - ints[ints_length+3]*DM;
+                    destination = locations[locs_length+1];
+                    mask = ints[ints_length+1];
+                }
+            } while (locs_length > 0);
         }
-
-        source = null;
-        last_message = null;
-        source = null;
-        destination = null;
-        mask = 0;
-        return false;
+        if (destination != null) {
+            return true;
+        } else {
+            destination = null;
+            mask = 0;
+            return false;
+        }
     }
 
     /**
@@ -168,14 +261,6 @@ public class Communicator {
      */
     public int getCommand() {
         return mask;
-    }
-
-    /**
-     * Gets the source of the last message.
-     * @return The last message's path.
-     */
-    public MapLocation getSource() {
-        return source;
     }
 
     /**

@@ -27,7 +27,7 @@ public class Fighter extends Caste {
 
         home = myRC.getLocation();
 
-        msgMask = Communicator.ATTACK | Communicator.BASE;
+        msgMask = Communicator.ATTACK;
     }
 
     public void SM() {
@@ -35,13 +35,9 @@ public class Fighter extends Caste {
             try {
                 if(com.receive(msgMask) && state != State.ATTACK) {
                     int msg = com.getCommand();
-                    if(msg == Communicator.BASE) {
-                        home = com.getSource();
-                    } else {
-                        nav.setDestination(com.getDestination(), 3);
-                        target = com.getDestination();
-                        state = State.GO;
-                    }
+                    nav.setDestination(com.getDestination(), 3);
+                    target = com.getDestination();
+                    state = State.GO;
                 }
 
                 switch(state) {

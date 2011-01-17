@@ -95,7 +95,7 @@ public class Sentry extends Caste {
             return;
         } else if(com.receive(bitmask)) {
             assistLoc = com.getDestination();
-            com.relay();
+            com.send();
             nav.setDestination(assistLoc, 3);
             nav.bugNavigate(false);
             state = State.ASSIST;
@@ -118,12 +118,15 @@ public class Sentry extends Caste {
     private void attack() throws GameActionException {
         MapLocation l = attacker.autoFire();
         if(l == null) {
-            broadcastDelay = 0;
+            broadcastDelay = 10;
             state = State.WANDER;
         } else {
-            if(++broadcastDelay >= 10) {
-                broadcastDelay = 0;
-                com.send(Communicator.ATTACK, 5, l);
+            com.receive(0);
+            if(--broadcastDelay <= 0) {
+                broadcastDelay = 10;
+                com.send(Communicator.ATTACK, 1, 1, l);
+            } else {
+                com.send();
             }
             nav.setDestination(l, 3);
         }
