@@ -19,6 +19,8 @@ public class Attacker {
     // }}}
 
     // {{{ Cache
+    public int rank;
+    public int mask;
     private Robot [] robots;
     private double hp;
     private MapLocation runDest;
@@ -163,6 +165,9 @@ public class Attacker {
     public MapLocation autoFire() throws GameActionException {
         RobotInfo robotInfo = null, tmpRobotInfo = null;
         MapLocation myLoc = myRC.getLocation();
+        int bit = 0;
+        rank = 0;
+        mask = 0;
 
         int tmpDistSq, minDistSq = 1000;
 
@@ -177,14 +182,18 @@ public class Attacker {
                 if (team != r.getTeam())
                     continue;
                 tmpRobotInfo = sensor.senseRobotInfo(r);
-                if ((chassisMask == 0 || (chassisMask & (1 << tmpRobotInfo.chassis.ordinal())) != 0)) 
+
+                rank += tmpRobotInfo.chassis.cost;
+                mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
+                if (chassisMask == 0 || (chassisMask & bit) != 0)
                 {
                     // FIXME: see if this is slower/faster. may get rid of withinRange.
-                    if (minGun.withinRange(tmpRobotInfo.location)) {
-                        robotInfo = tmpRobotInfo;
-                        robot = r;
-                        break;
-                    } else if ((tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq) {
+                    //if (minGun.withinRange(tmpRobotInfo.location)) {
+                    //    robotInfo = tmpRobotInfo;
+                    //    robot = r;
+                    //    break;
+                    //} else...
+                    if ((tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq) {
                         minDistSq = tmpDistSq;
                         robotInfo = tmpRobotInfo;
                         robot = r;
