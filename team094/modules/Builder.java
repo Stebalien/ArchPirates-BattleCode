@@ -141,8 +141,10 @@ public class Builder {
         // Complete build or return in progress.
         if (++p == components.length) {
             try {
-                if (turn_on)
+                if (turn_on) {
+                    System.out.println("### Turning on robot ###");
                     myRC.turnOn(location, level);
+                }
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
