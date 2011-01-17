@@ -5,6 +5,7 @@ import battlecode.common.*;
 
 public class Sentry extends Caste {
     private static enum State {
+        ORIENT,
         WANDER,
         ASSIST,
         ATTACK,
@@ -20,7 +21,7 @@ public class Sentry extends Caste {
     public Sentry(RobotProperties rp){
         super(rp);
 
-        state = State.WANDER;
+        state = State.ORIENT;
         attacker = new Attacker(rp);
 
         bitmask = (Communicator.ATTACK|Communicator.DEFEND);
@@ -30,6 +31,9 @@ public class Sentry extends Caste {
         while(true) {
             try {
                 switch(state) {
+                    case ORIENT:
+                        orient();
+                        break;
                     case WANDER:
                         wander();
                         break;
@@ -53,6 +57,34 @@ public class Sentry extends Caste {
             myRC.yield();
         }
     }
+
+    private void orient() throws GameActionException {
+        while (myRP.motor.isActive()) myRC.yield();
+        myRP.motor.setDirection(myRC.getDirection().opposite());
+        myRC.yield();
+        MapLocation loc, myLoc = myRC.getLocation();
+        loc = myLoc;
+
+        if (myRC.senseTerrainTile(myLoc.add(Direction.NORTH, 4)) == TerrainTile.OFF_MAP) {
+            loc = loc.add(Direction.NORTH);
+        }
+        if (myRC.senseTerrainTile(myLoc.add(Direction.SOUTH, 4)) == TerrainTile.OFF_MAP) {
+            loc = loc.add(Direction.SOUTH);
+        }
+        if (myRC.senseTerrainTile(myLoc.add(Direction.EAST, 4)) == TerrainTile.OFF_MAP) {
+            loc = loc.add(Direction.EAST);
+        }
+        if (myRC.senseTerrainTile(myLoc.add(Direction.WEST, 4)) == TerrainTile.OFF_MAP) {
+            loc = loc.add(Direction.WEST);
+        }
+        Direction dir = myLoc.directionTo(loc);
+        if (dir != Direction.OMNI) {
+            while (myRP.motor.isActive()) myRC.yield();
+            myRP.motor.setDirection(dir.opposite());
+        }
+        state = State.WANDER;
+    }
+
 
     private void wander() throws GameActionException {
         MapLocation l;
