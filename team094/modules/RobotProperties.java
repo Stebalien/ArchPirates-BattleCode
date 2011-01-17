@@ -23,6 +23,9 @@ public class RobotProperties {
         myRC = rc;
         myTeam = myRC.getTeam();
         opTeam = myTeam.opponent();
+        update();
+    }
+    public void update() {
         components = myRC.components();
 
         // Sort Components
@@ -65,5 +68,6 @@ public class RobotProperties {
         for (int i = 0; i<c_beams; i++) {
             beams[i] = tmp_beams[i];
         }
+
     }
 }
