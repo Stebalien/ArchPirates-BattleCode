@@ -5,12 +5,13 @@ import battlecode.common.*;
 
 public class Miner extends Caste {
     private static enum State {
+        OFF,
         IDLE,
         BUILD,
         YIELD
     }
     private static final int MAX_SCOUTS = 3,
-                             TIMEOUT = 500;
+                             OFF_ROUNDS = 20;
 
     private final Builder builder;
     private final MapLocation myLoc; // Buildings can't move.
@@ -18,12 +19,12 @@ public class Miner extends Caste {
     private boolean scout;
     private State state;
     private int scouts,
-                timer;
+                offCounter;
 
     public Miner(RobotProperties rp){
         super(rp);
 
-        state = State.IDLE;
+        state = State.OFF;
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
 
@@ -34,6 +35,9 @@ public class Miner extends Caste {
         while(true) {
             try {
                 switch(state) {
+                    case OFF:
+                        off();
+                        break;
                     case IDLE:
                         idle();
                         break;
@@ -54,12 +58,13 @@ public class Miner extends Caste {
         }
     }
 
-    private void idle() throws GameActionException {
-        if(scouts == 0 && (++timer) >= TIMEOUT) {
-            timer = 0;
-            myRC.turnOff();
-        }
+    private void off() {
+        myRC.turnOff();
+        offCounter = 0;
+        state = State.IDLE;
+    }
 
+    private void idle() throws GameActionException {
         Robot[] nearby = myRP.sensor.senseNearbyGameObjects(Robot.class);
         for(Robot r: nearby) {
             if(r != null && r.getTeam() == myRP.myTeam) {
@@ -91,6 +96,9 @@ public class Miner extends Caste {
                 }
             }
         }
+
+        if(++offCounter >= OFF_ROUNDS)
+            state = State.OFF;
     }
 
     private void build_fighter() {
@@ -128,6 +136,7 @@ public class Miner extends Caste {
                 }
             case FAIL:
                 state = State.IDLE;
+                offCounter = 0;
                 break;
             default:
                 break;

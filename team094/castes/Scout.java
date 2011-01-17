@@ -163,7 +163,7 @@ public class Scout extends Caste {
                 towerLoc = null;
             case DONE:
                 if(towerLoc != null) {
-                    builder.startBuild(false, towerLoc, Chassis.BUILDING);
+                    builder.startBuild(true, towerLoc, Chassis.BUILDING);
                     towerLoc = null;
                     timeout = 0;
                 } else {

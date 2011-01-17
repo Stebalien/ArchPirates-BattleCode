@@ -82,19 +82,25 @@ public class Armory extends Caste {
     }
 
     private void idle() throws GameActionException {
-        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null) {
+        Robot r = (Robot)myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
+
+        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null &&
+           r != null) {
             builder.startBuild(false, locations[locIndex], Chassis.FLYING);
+            if(!myRP.sensor.senseRobotInfo(r).on)
+                myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
             state = state.BUILD;
         }
 
         locIndex = (locIndex+1+locations.length)%locations.length;
     }
 
+    @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
-            case FAIL:
                 cooldown = COOLDOWN;
+            case FAIL:
                 state = State.DELAY;
                 break;
             default:

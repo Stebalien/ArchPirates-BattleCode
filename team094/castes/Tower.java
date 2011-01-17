@@ -5,6 +5,7 @@ import battlecode.common.*;
 
 public class Tower extends Caste {
     private static enum State {
+        SETUP,
         DEFEND,
         YIELD
     }
@@ -17,7 +18,7 @@ public class Tower extends Caste {
         super(rp);
 
         attacker = new Attacker(rp);
-        state = State.DEFEND;
+        state = State.SETUP;
         myLoc = myRC.getLocation();
     }
 
@@ -25,6 +26,9 @@ public class Tower extends Caste {
         while(true) {
             try {
                 switch(state) {
+                    case SETUP:
+                        setup();
+                        break;
                     case DEFEND:
                         defend();
                         break;
@@ -40,6 +44,27 @@ public class Tower extends Caste {
 //            System.out.println(Clock.getBytecodeNum());
             myRC.yield();
         }
+    }
+
+    private void setup() throws GameActionException {
+        System.out.println("### This should be called ###");
+        Mine[] nearbyMines = myRP.sensor.senseNearbyGameObjects(Mine.class);
+        for(Mine m: nearbyMines) {
+            MapLocation l = m.getLocation();
+            Robot r;
+            if(myLoc.isAdjacentTo(l) &&
+               !myLoc.directionTo(l).isDiagonal() &&
+               (r = (Robot)myRP.sensor.senseObjectAtLocation(l, RobotLevel.ON_GROUND)) != null) {
+                System.out.println("## Found valid location for miner ##");
+                if(!myRP.sensor.senseRobotInfo(r).on)
+                    myRC.turnOn(l, RobotLevel.ON_GROUND);
+                break;
+            }
+        }
+
+        state = State.DEFEND;
+        System.out.println("### GAh, why?!?!? ###");
+        myRC.turnOff();
     }
 
     private void defend() throws GameActionException {
