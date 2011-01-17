@@ -51,7 +51,6 @@ public abstract class Caste {
                 else
                     return new Scout(myRP);
             case BUILDING:
-                System.out.println("-- Casting the fate of a building --");
                 if(myRP.builder != null) {
                     switch (myRP.builder.type()) {
                         case RECYCLER:
@@ -59,11 +58,9 @@ public abstract class Caste {
                         case ARMORY:
                             return new Armory(myRP);
                         default:
-                            System.out.println("### Built a tower ###");
                             return new Tower(myRP);
                     }
                 } else {
-                    System.out.println("### Built a tower ###");
                     return new Tower(myRP);
                 }
             default:

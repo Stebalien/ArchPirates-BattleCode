@@ -17,7 +17,6 @@ public class Tower extends Caste {
     public Tower(RobotProperties rp){
         super(rp);
 
-        attacker = new Attacker(rp);
         state = State.SETUP;
         myLoc = myRC.getLocation();
     }
@@ -47,7 +46,6 @@ public class Tower extends Caste {
     }
 
     private void setup() throws GameActionException {
-        System.out.println("### This should be called ###");
         Mine[] nearbyMines = myRP.sensor.senseNearbyGameObjects(Mine.class);
         for(Mine m: nearbyMines) {
             MapLocation l = m.getLocation();
@@ -55,7 +53,6 @@ public class Tower extends Caste {
             if(myLoc.isAdjacentTo(l) &&
                !myLoc.directionTo(l).isDiagonal() &&
                (r = (Robot)myRP.sensor.senseObjectAtLocation(l, RobotLevel.ON_GROUND)) != null) {
-                System.out.println("## Found valid location for miner ##");
                 if(!myRP.sensor.senseRobotInfo(r).on)
                     myRC.turnOn(l, RobotLevel.ON_GROUND);
                 break;
@@ -63,8 +60,9 @@ public class Tower extends Caste {
         }
 
         state = State.DEFEND;
-        System.out.println("### GAh, why?!?!? ###");
         myRC.turnOff();
+        myRP.update();
+        attacker = new Attacker(myRP);
     }
 
     private void defend() throws GameActionException {
