@@ -97,6 +97,7 @@ public class Builder {
      *   * DONE when the build is done and the robot has turned on.
      *   * FAIL when the build fails.
      */
+    @SuppressWarnings("fallthrough")
     public TaskState doBuild() throws GameActionException {
         // Build Chassis
         if (builder.isActive()) return TaskState.ACTIVE;
@@ -114,6 +115,7 @@ public class Builder {
                     return TaskState.WAITING;
                 try {
                     builder.build(chassis, location);
+                    p++;
                     return TaskState.ACTIVE;
                 } catch (Exception e) {
                     System.out.println("caught exception:");
@@ -121,7 +123,8 @@ public class Builder {
                     p = -2;
                     return TaskState.FAIL;
                 }
-                break;
+            case 0:
+                if (components.length == 0) break;
             default:
                 // I don't check if I can still build because the exception doesn't really cost that much and checking this is a PAIN.
                 if (myRC.getTeamResources() < MULT*components[p].cost)
@@ -129,6 +132,7 @@ public class Builder {
                 else {
                     try {
                         builder.build(components[p], location, level);
+                        p++;
                     } catch (Exception e) {
                         System.out.println("caught exception:");
                         e.printStackTrace();
@@ -139,7 +143,7 @@ public class Builder {
         }
 
         // Complete build or return in progress.
-        if (++p == components.length) {
+        if (p == components.length) {
             try {
                 if (turn_on) {
                     System.out.println("### Turning on robot ###");
