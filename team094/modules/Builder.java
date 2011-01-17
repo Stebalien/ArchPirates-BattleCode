@@ -118,8 +118,9 @@ public class Builder {
                     p++;
                     return TaskState.ACTIVE;
                 } catch (Exception e) {
-                    System.out.println("caught exception:");
-                    e.printStackTrace();
+                    // Thrown often, not worth checking.
+                    //System.out.println("caught exception:");
+                    //e.printStackTrace();
                     p = -2;
                     return TaskState.FAIL;
                 }
@@ -134,8 +135,9 @@ public class Builder {
                         builder.build(components[p], location, level);
                         p++;
                     } catch (Exception e) {
-                        System.out.println("caught exception:");
-                        e.printStackTrace();
+                    // Thrown often, not worth checking.
+                        //System.out.println("caught exception:");
+                        //e.printStackTrace();
                         p = -2;
                         return TaskState.FAIL;
                     }
