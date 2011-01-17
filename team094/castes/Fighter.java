@@ -5,77 +5,60 @@ import battlecode.common.*;
 
 public class Fighter extends Caste {
     private static enum State {
+        OFF,
+        SEARCH,
+        GO,
         ATTACK,
-        DEFEND,
-        WANDER,
-        INIT,
-        YIELD,
-        GOTO
+        GO_HOME,
+        YIELD
     }
     private State state;
 
     private final Attacker attacker;
-    private final int bitmask;
+    private MapLocation home,
+                        target;
+    private int msgMask,
+                timer;
 
     public Fighter(RobotProperties rp){
         super(rp);
-
-        state = State.INIT;
-
+        state = State.SEARCH;
         attacker = new Attacker(rp);
 
-        bitmask = ( Communicator.ATTACK | Communicator.DEFEND );
-    }
-    
+        home = myRC.getLocation();
 
-    @SuppressWarnings("fallthrough")
+        msgMask = Communicator.ATTACK | Communicator.BASE;
+    }
+
     public void SM() {
-        MapLocation destination = null;
-        MapLocation location = null;
         while(true) {
             try {
+                if(com.receive(msgMask) && state != State.ATTACK) {
+                    int msg = com.getCommand();
+                    if(msg == Communicator.BASE) {
+                        home = com.getSource();
+                    } else {
+                        nav.setDestination(com.getDestination(), 3);
+                        target = com.getDestination();
+                        state = State.GO;
+                    }
+                }
+
                 switch(state) {
-                    case INIT:
-                        // Wait until we stop firing and the gun is ready
-                        nav.setDestination(new MapLocation(0,0));
-                        nav.bugNavigate();
-                        state = State.WANDER;
+                    case OFF:
+                        off();
                         break;
-                    case WANDER:
-                        //if (com.recieve(bitmask)) {
-                        //    nav.setDestination(destination = com.getDestination(), 4);
-                        //    state = State.GOTO;
-                        //} else ...
-                        if ((location = attacker.autoFire()) != null) {
-                            nav.setDestination(location, 4);
-                            state = State.ATTACK;
-                        }
-                        nav.bugNavigate();
+                    case SEARCH:
+                        search();
                         break;
-                    case DEFEND:
-                        attacker.autoFire();
-                        break;
-                    case GOTO:
-                        attacker.autoFire();
-                        if (destination != null)
-                            com.send(Communicator.ATTACK, 1, destination);
-                        if (!nav.bugNavigate())
-                            state = State.ATTACK;
+                    case GO:
+                        go();
                         break;
                     case ATTACK:
-                        //if (destination != null)
-                        //    com.send(Communicator.ATTACK, destination);
-                        
-                        if ((location = attacker.autoFire()) != null) {
-                            nav.setDestination(location, 4);
-                            nav.bugNavigate();
-                        } else {
-                            state = State.INIT;
-                        }
+                        attack();
                         break;
-                    case YIELD:
-                    default:
-                        yield();
+                    case GO_HOME:
+                        go_home();
                         break;
                 }
             } catch (Exception e) {
@@ -83,8 +66,72 @@ public class Fighter extends Caste {
                 e.printStackTrace();
             }
 
-            System.out.println(Clock.getBytecodeNum());
+            //System.out.println(Clock.getBytecodeNum());
             myRC.yield();
+        }
+    }
+
+    private void off() {
+        state = state.SEARCH;
+        myRC.turnOff();
+        for(timer = 0; timer < GameConstants.POWER_WAKE_DELAY; timer++)
+            myRC.yield();
+        timer = 0;
+
+    }
+
+    private void search() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            nav.bugNavigate(true);
+            state = State.ATTACK;
+        } else if(timer > 7) {
+            nav.setDestination(home, 2);
+            nav.bugNavigate(true);
+            state = State.GO_HOME;
+        } else {
+            nav.rotate(true, 1);
+            timer++;
+        }
+    }
+
+    private void go() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            nav.bugNavigate(true);
+            state = State.ATTACK;
+        } else if(nav.bugNavigate(true)) {
+            target = null;
+            timer = 0;
+            state = state.SEARCH;
+        }
+    }
+
+    private void attack() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) == null) {
+            if(target != null) {
+                nav.setDestination(target, 3);
+                state = state.GO;
+            } else {
+                timer = 0;
+                state = State.SEARCH;
+            }
+        }
+
+        nav.bugNavigate(true);
+    }
+
+    private void go_home() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            nav.bugNavigate(true);
+            state = State.ATTACK;
+        } else if(nav.bugNavigate(true)) {
+            state = State.OFF;
         }
     }
 }

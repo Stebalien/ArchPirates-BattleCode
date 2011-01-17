@@ -11,6 +11,7 @@ public class Communicator {
     public static final int ATTACK_BUILDING = 2;
     public static final int DEFEND = 4;
     public static final int HEAL = 8;
+    public static final int BASE = 16;
 
     // Cache
     private int mask;
@@ -103,11 +104,12 @@ public class Communicator {
      *          2 - Attack Building
      *          4 - Defend
      *          8 - Heal
+     *         16 - Base
      *
      * @param bitmask The bitmask that must match the command.
      * @return true if a message was recieved.
      */
-    public boolean recieve(int bitmask) {
+    public boolean receive(int bitmask) {
         // Do this so that both id_now and id_prev are stored in constants. (saves a bytecode per lookup and one here)
         int id_now = Clock.getRoundNum();
         int id_prev = MessageID.get(id_now - 1);

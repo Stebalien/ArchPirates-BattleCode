@@ -57,6 +57,8 @@ public abstract class Caste {
                             return new Miner(myRP);
                         case ARMORY:
                             return new Armory(myRP);
+                        case FACTORY:
+                            return new Factory(myRP);
                         default:
                             return new Tower(myRP);
                     }

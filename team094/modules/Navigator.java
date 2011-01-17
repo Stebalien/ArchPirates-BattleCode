@@ -46,11 +46,11 @@ public class Navigator {
      * from the goal since the wall following started (0 if no wall following is occuring), and
      * 'bnav_lastDest', the last destination that navigate was called with.
      *
-     * @param motor the motor object for the robot
-     * @param sensor the sensor used to view the map
+     * @param faceDest if true, robot will turn to face the destination after reaching it, setting a
+     *                 final facing overrides
      * @return false if there is a destination that hasn't been reached, true otherwise
      */
-    public boolean bugNavigate() throws GameActionException {
+    public boolean bugNavigate(boolean faceDest) throws GameActionException {
         // If the motor is cooling down, don't bother navigating
         // Also return if no destination is set
         // Some precomputation might be useful eventually
@@ -63,9 +63,17 @@ public class Navigator {
         Direction cur = myRC.getDirection();
         int targetDist = loc.distanceSquaredTo(bnav_lastDest);
         if(targetDist <= bnav_targetDist) {
-            if(bnav_lastDir != null && bnav_lastDir != cur) {
-                motor.setDirection(bnav_lastDir);
-                return false;
+            if(bnav_lastDir != null) {
+                if(bnav_lastDir != cur) {
+                    motor.setDirection(bnav_lastDir);
+                    return false;
+                }
+            } else if(faceDest) {
+                Direction destDir = loc.directionTo(bnav_lastDest);
+                if(destDir != Direction.NONE && destDir != Direction.OMNI && cur != destDir) {
+                    motor.setDirection(destDir);
+                    return false;
+                }
             }
             bnav_lastDest = null;
             bnav_lastDir = null;

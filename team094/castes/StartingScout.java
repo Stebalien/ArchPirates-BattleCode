@@ -92,7 +92,7 @@ public class StartingScout extends Caste {
 
                     // Finally head to the first mine
                     nav.setDestination(targets[1].getLocation(), 1.9);
-                    nav.bugNavigate();
+                    nav.bugNavigate(false);
                 } else {
                     // Fixes a bug, where the mine cannot be sensed if the robot doesn't start facing it
                     nav.setDirection(wallDir);
@@ -103,7 +103,7 @@ public class StartingScout extends Caste {
             }
         } else if(ti == 1) {
             // Found first mine, move towards it and build
-            if(nav.bugNavigate()) {
+            if(nav.bugNavigate(false)) {
                 builder.startBuild(true, targets[1].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
                 builder.doBuild();
 
@@ -112,7 +112,7 @@ public class StartingScout extends Caste {
             }
         } else if(ti == 0) {
             // Should be within range of second mine, but just in case, navigate
-            if(nav.bugNavigate()) {
+            if(nav.bugNavigate(false)) {
                 MapLocation loc = myRC.getLocation();
                 if(loc.equals(targets[ti].getLocation())) {
                     // It is most common to be on this second mine, so usually the robot will have
@@ -170,7 +170,7 @@ public class StartingScout extends Caste {
 
     private void find_wall() throws GameActionException {
         // Navigate towards 0,0, looking for map boundaries
-        nav.bugNavigate();
+        nav.bugNavigate(false);
 
         // If the square in front is off Map, turn right and start following the wall
         if(myRC.senseTerrainTile(myRC.getLocation().add(myRC.getDirection())) == TerrainTile.OFF_MAP) {
@@ -200,13 +200,13 @@ public class StartingScout extends Caste {
         if(ti < 0) {
             if(wallLoc != null) {
                 nav.setDestination(wallLoc, wallDir, 0);
-                if(nav.bugNavigate()) {
+                if(nav.bugNavigate(false)) {
                     wallLoc = null;
                 }
             } else {
                 nav.wallFollow(false);
             }
-        } else if(nav.bugNavigate()) {
+        } else if(nav.bugNavigate(false)) {
             MapLocation mineLoc = targets[ti].getLocation();
             MapLocation loc = myRC.getLocation();
 

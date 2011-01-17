@@ -28,7 +28,8 @@ public class Miner extends Caste {
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
 
-        scout = true;
+        // Uncomment to produce scouts first
+        //scout = true;
     }
 
     public void SM() {

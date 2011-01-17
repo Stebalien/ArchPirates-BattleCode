@@ -3,18 +3,23 @@ package team094.castes;
 import team094.modules.*;
 import battlecode.common.*;
 
+import java.util.Random;
+
 public class Scout extends Caste {
     private static int TIMEOUT = 150;
+    private static double FACTORY_PROB = .0013;
     private static enum State {
         INIT,
         WANDER,
         BUILD,
         BUILD_ARMORY,
+        BUILD_FACTORY,
         YIELD
     }
     private State state;
 
     private final Builder builder;
+    private Random r;
     private Mine[] targets;
     private boolean armory;
     private MapLocation lastMine,
@@ -28,8 +33,11 @@ public class Scout extends Caste {
         state = State.INIT;
         builder = new Builder(rp);
         targets = new Mine[10];
+
+        r = new Random(myRC.getRobot().getID());
     }
 
+    @SuppressWarnings("fallthrough")
     public void SM() {
         while(true) {
             try {
@@ -46,6 +54,8 @@ public class Scout extends Caste {
                     case BUILD_ARMORY:
                         build_armory();
                         break;
+                    case BUILD_FACTORY:
+                        build_factory();
                     case YIELD:
                     default:
                         yield();
@@ -83,12 +93,27 @@ public class Scout extends Caste {
         }
 
         if(ti < 0) {
-            lastMine = null;
-            if(nav.canMoveForward())
-                nav.move(true);
-            else
-                nav.setDirection(myRC.getDirection().opposite().rotateLeft());
-        } else if(nav.bugNavigate()) {
+            // Check to see if you should build a factory (beeeeg soldiers! >:D)
+            if(r.nextDouble() < FACTORY_PROB) {
+                System.out.println("### Attempting to build a factory ###");
+                MapLocation loc = myRC.getLocation();
+                Direction d = myRC.getDirection().rotateLeft();
+                for(int i = 0; i < 3; i++, d = d.rotateRight()) {
+                    MapLocation dest = loc.add(d);
+                    if(myRC.senseTerrainTile(dest) == TerrainTile.LAND &&
+                       myRP.sensor.senseObjectAtLocation(dest, RobotLevel.ON_GROUND) == null) {
+                        builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.FACTORY);
+                        state = State.BUILD_FACTORY;
+                    }
+                }
+            } else {
+                lastMine = null;
+                if(nav.canMoveForward())
+                    nav.move(true);
+                else
+                    nav.setDirection(myRC.getDirection().opposite().rotateLeft());
+            }
+        } else if(nav.bugNavigate(false)) {
             if(lastMine == null)
                 lastMine = targets[ti].getLocation();
             builder.startBuild(true, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
@@ -154,7 +179,7 @@ public class Scout extends Caste {
 
     @SuppressWarnings("fallthrough")
     private void build_armory() throws GameActionException {
-        if(nav.bugNavigate()) {
+        if(nav.bugNavigate(false)) {
             switch(builder.doBuild()) {
             case WAITING:
                 if(++timeout < TIMEOUT)
@@ -174,6 +199,18 @@ public class Scout extends Caste {
             default:
                 break;
             }
+        }
+    }
+
+    @SuppressWarnings("fallthrough")
+    private void build_factory() throws GameActionException {
+        switch(builder.doBuild()) {
+            case FAIL:
+            case DONE:
+                state = state.WANDER;
+                break;
+            default:
+                break;
         }
     }
 }
