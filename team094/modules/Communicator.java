@@ -60,6 +60,11 @@ public class Communicator {
         return myRC.getAllMessages().length > 0;
     }
 
+    public boolean turnOn(int [] ids) throws GameActionException {
+        if (comm == null || comm.isActive()) return false;
+        comm.broadcastTurnOn(ids);
+        return true;
+    }
 
     /**
      * Relays the cached message if there is one and we should relay it.

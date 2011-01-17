@@ -124,7 +124,7 @@ public class Sentry extends Caste {
             com.receive(0);
             if(--broadcastDelay <= 0) {
                 broadcastDelay = 10;
-                com.send(Communicator.ATTACK, 1, 1, l);
+                com.send(Communicator.ATTACK, attacker.rank, 5, l);
             } else {
                 com.send();
             }

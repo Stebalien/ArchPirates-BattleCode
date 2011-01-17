@@ -80,6 +80,8 @@ public class Factory extends Caste {
             default:
                 break;
         }
+        com.receive();
+        com.send();
     }
 
     @SuppressWarnings("fallthrough")
@@ -94,6 +96,8 @@ public class Factory extends Caste {
             default:
                 break;
         }
+        com.receive();
+        com.send();
     }
 
     private void idle() throws GameActionException {
@@ -110,10 +114,15 @@ public class Factory extends Caste {
                     state = State.BUILD_SOLDIERS;
                 }
             }
+            com.receive();
+            com.send();
         } else {
             if(++timer >= WAKE_TIME) {
-                myRP.comm.broadcastTurnOn(soldierIDS);
+                com.turnOn(soldierIDS);
                 timer = 0;
+            } else {
+                com.receive();
+                com.send();
             }
         }
     }
