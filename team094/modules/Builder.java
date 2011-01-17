@@ -114,6 +114,7 @@ public class Builder {
                     return TaskState.WAITING;
                 try {
                     builder.build(chassis, location);
+                    return TaskState.ACTIVE;
                 } catch (Exception e) {
                     System.out.println("caught exception:");
                     e.printStackTrace();
