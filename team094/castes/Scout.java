@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class Scout extends Caste {
     private static int TIMEOUT = 150;
-    private static double FACTORY_PROB = .0013;
+    private static double FACTORY_PROB = .001;
     private static enum State {
         INIT,
         WANDER,
@@ -23,7 +23,8 @@ public class Scout extends Caste {
     private Mine[] targets;
     private boolean armory;
     private MapLocation lastMine,
-                        towerLoc;
+                        towerLoc,
+                        home;
     private int ti,
                 timeout;
 
@@ -33,6 +34,7 @@ public class Scout extends Caste {
         state = State.INIT;
         builder = new Builder(rp);
         targets = new Mine[10];
+        home = myRC.getLocation();
 
         r = new Random(myRC.getRobot().getID());
     }
@@ -94,7 +96,7 @@ public class Scout extends Caste {
 
         if(ti < 0) {
             // Check to see if you should build a factory (beeeeg soldiers! >:D)
-            if(r.nextDouble() < FACTORY_PROB) {
+            if(r.nextDouble() < FACTORY_PROB+home.distanceSquaredTo(myRC.getLocation())*.0000002) {
                 System.out.println("### Attempting to build a factory ###");
                 MapLocation loc = myRC.getLocation();
                 Direction d = myRC.getDirection().rotateLeft();
