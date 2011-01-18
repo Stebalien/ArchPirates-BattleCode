@@ -9,18 +9,17 @@ public class Factory extends Caste {
         BUILD_DISH,
         BUILD_SOLDIERS,
         IDLE,
+        PANIC,
         YIELD
     }
-    private static final int MAX_SOLDIERS = 4,
-                             WAKE_TIME = 150;
+    private static final int MAX_SOLDIERS = 4;
     private State state;
 
     private final Builder builder;
     private MapLocation myLoc,
                         soldierLoc;
     private int[] soldierIDS;
-    private int soldiers,
-                timer;
+    private int soldiers;
 
     public Factory(RobotProperties rp) {
         super(rp);
@@ -34,6 +33,10 @@ public class Factory extends Caste {
 
     public void SM() {
         while(true) {
+            if(myRC.getHitpoints()/myRC.getMaxHp() < .25) {
+                System.out.println("--- HELP I'm DYING!!! BWAAA ---");
+                state = State.PANIC;
+            }
             try {
                 switch(state) {
                     case INIT:
@@ -47,6 +50,9 @@ public class Factory extends Caste {
                         break;
                     case IDLE:
                         idle();
+                        break;
+                    case PANIC:
+                        panic();
                         break;
                     case YIELD:
                     default:
@@ -116,14 +122,19 @@ public class Factory extends Caste {
             }
             com.receive();
             com.send();
-        } else {
-            if(++timer >= WAKE_TIME) {
-                com.turnOn(soldierIDS);
-                timer = 0;
-            } else {
-                com.receive();
-                com.send();
-            }
+        } else if(com.receive(Communicator.ATTACK)) {
+            com.turnOn(soldierIDS);
+            myRC.yield();
+            com.send();
         }
+    }
+
+    private void panic() throws GameActionException {
+        while(!com.turnOn(soldierIDS))
+            myRC.yield();
+        while(!com.send(Communicator.SCATTER, 10000, 0, myLoc))
+            myRC.yield();
+        while(!com.send(Communicator.ATTACK, 1000, 2, myLoc))
+            myRC.yield();
     }
 }

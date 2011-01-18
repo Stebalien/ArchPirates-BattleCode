@@ -10,6 +10,8 @@ public class Fighter extends Caste {
         GO,
         ATTACK,
         GO_HOME,
+        WANDER,
+        WSEARCH,
         YIELD
     }
     private State state;
@@ -27,17 +29,23 @@ public class Fighter extends Caste {
 
         home = myRC.getLocation();
 
-        msgMask = Communicator.ATTACK;
+        msgMask = Communicator.ATTACK | Communicator.SCATTER;
     }
 
     public void SM() {
         while(true) {
             try {
                 if(com.receive(msgMask) && state != State.ATTACK) {
-                    int msg = com.getCommand();
-                    nav.setDestination(com.getDestination(), 3);
-                    target = com.getDestination();
-                    state = State.GO;
+                    if(com.getCommand() == Communicator.SCATTER) {
+                        if(com.getDestination().isAdjacentTo(home)) {
+                            home = null;
+                            state = State.WSEARCH;
+                        }
+                    } else {
+                        nav.setDestination(com.getDestination(), 3);
+                        target = com.getDestination();
+                        state = State.GO;
+                    }
                 }
 
                 switch(state) {
@@ -113,7 +121,10 @@ public class Fighter extends Caste {
                 state = state.GO;
             } else {
                 timer = 0;
-                state = State.SEARCH;
+                if(home != null)
+                    state = State.SEARCH;
+                else
+                    state = State.WSEARCH;
             }
         }
 
@@ -128,6 +139,32 @@ public class Fighter extends Caste {
             state = State.ATTACK;
         } else if(nav.bugNavigate(true)) {
             state = State.OFF;
+        }
+    }
+
+    private void wander() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            state = State.ATTACK;
+        }
+
+        nav.bugNavigate(true);
+    }
+
+    private void wsearch() throws GameActionException {
+        MapLocation l;
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 3);
+            nav.bugNavigate(true);
+            state = State.ATTACK;
+        } else if(timer > 7) {
+            nav.setDestination(myRC.getLocation().add(myRC.getDirection(), 100), 2);
+            nav.bugNavigate(true);
+            state = State.WANDER;
+        } else {
+            nav.rotate(true, 1);
+            timer++;
         }
     }
 }

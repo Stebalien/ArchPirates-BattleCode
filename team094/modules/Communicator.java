@@ -13,6 +13,7 @@ public class Communicator {
     public static final int ATTACK_BUILDING = 2;
     public static final int DEFEND = 4;
     public static final int HEAL = 8;
+    public static final int SCATTER = 16;
 
     // Cache
     private int mask;
