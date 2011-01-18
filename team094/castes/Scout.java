@@ -97,7 +97,6 @@ public class Scout extends Caste {
         if(ti < 0) {
             // Check to see if you should build a factory (beeeeg soldiers! >:D)
             if(r.nextDouble() < FACTORY_PROB+home.distanceSquaredTo(myRC.getLocation())*.0000002) {
-                System.out.println("### Attempting to build a factory ###");
                 MapLocation loc = myRC.getLocation();
                 Direction d = myRC.getDirection().rotateLeft();
                 for(int i = 0; i < 3; i++, d = d.rotateRight()) {

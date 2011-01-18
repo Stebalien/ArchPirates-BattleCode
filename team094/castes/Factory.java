@@ -33,10 +33,8 @@ public class Factory extends Caste {
 
     public void SM() {
         while(true) {
-            if(myRC.getHitpoints()/myRC.getMaxHp() < .25) {
-                System.out.println("--- HELP I'm DYING!!! BWAAA ---");
+            if(myRC.getHitpoints()/myRC.getMaxHp() < .25)
                 state = State.PANIC;
-            }
             try {
                 switch(state) {
                     case INIT:
