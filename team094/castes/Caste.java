@@ -9,7 +9,7 @@ public abstract class Caste {
     protected final RobotController myRC;
     protected final RobotProperties myRP;
     protected final Navigator nav;
-    protected final Communicator com;
+    protected Communicator com;
 
     /**
      * Instantiates the abstract caste.

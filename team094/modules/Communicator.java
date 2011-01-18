@@ -108,17 +108,19 @@ public class Communicator {
             message.locations = new MapLocation [locs_length = length*2];
         }
         if (messages != null) {
-            for (int i = messages.length; --i > 0; ) {
+            for (int i = messages.length; i-- > 0; ) {
                 if (messages[i] == null) continue;
                 int ml_length = messages[i].locations.length - 1;
                 int mi_length = messages[i].ints.length - 1;
                 // Can be a do while because all messages that are too short = null
+                System.out.println(ints_length+":"+locs_length+":"+mi_length+":"+ml_length);
                 do {
                     if (messages[i].ints[mi_length] < 0) {
                         ml_length -= 2;
                         mi_length -= 5;
                         continue;
                     }
+                    System.out.println("RESEND");
 
                     message.ints[--ints_length] = messages[i].ints[mi_length--];
                     message.ints[--ints_length] = messages[i].ints[mi_length--];
@@ -209,6 +211,7 @@ public class Communicator {
                 )
             {
                 messages[message_count] = null;
+                System.out.println("FAIL ROUND");
                 continue read;
             }
 
@@ -233,6 +236,7 @@ public class Communicator {
                       !=ints[--ints_length]
                       )
                 {
+                    System.out.println("FAIL");
                     messages[message_count].ints[ints_length+4] = -1;
                     continue;
                 }
@@ -243,13 +247,16 @@ public class Communicator {
                     ints[ints_length] = ints[ints_length+4]^(ints[ints_length+3]<<1)^csCache;
                 } else {
                     ints[ints_length+4] = -1;
+                    System.out.println("DROP");
                 }
 
                 if ((ints[ints_length+2] - ints[ints_length+3]*DM) > high_rank && (bitmask & ints[ints_length+1]) != 0) {
+                    System.out.println("CHOOSE");
                     high_rank = ints[ints_length+2] - ints[ints_length+3]*DM;
                     destination = locations[locs_length+1];
                     mask = ints[ints_length+1];
                 }
+                System.out.println("RECIEVE");
             } while (locs_length > 0);
         }
         if (destination != null) {

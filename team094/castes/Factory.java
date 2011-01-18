@@ -82,6 +82,7 @@ public class Factory extends Caste {
             case DONE:
                 state = State.IDLE;
                 myRP.update();
+                com = new Communicator(myRP);
                 break;
             default:
                 break;
@@ -125,16 +126,21 @@ public class Factory extends Caste {
         } else if(com.receive(Communicator.ATTACK)) {
             com.turnOn(soldierIDS);
             myRC.yield();
+            com.receive();
             com.send();
         }
     }
 
     private void panic() throws GameActionException {
-        while(!com.turnOn(soldierIDS))
+        while(!com.turnOn(soldierIDS)) {
+            com.clear();
             myRC.yield();
-        while(!com.send(Communicator.SCATTER, 10000, 0, myLoc))
+        } while(!com.send(Communicator.SCATTER, 10000, 0, myLoc)) {
+            com.clear();
             myRC.yield();
-        while(!com.send(Communicator.ATTACK, 1000, 2, myLoc))
+        } while(!com.send(Communicator.ATTACK, 1000, 2, myLoc)) {
+            com.clear();
             myRC.yield();
+        }
     }
 }
