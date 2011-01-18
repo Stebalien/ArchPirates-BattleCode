@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class Scout extends Caste {
     private static int TIMEOUT = 150;
-    private static double FACTORY_PROB = .001;
+    private static double FACTORY_PROB = .0012;
     private static enum State {
         INIT,
         WANDER,

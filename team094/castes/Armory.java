@@ -11,7 +11,7 @@ public class Armory extends Caste {
         DELAY,
         YIELD
     }
-    private static final int COOLDOWN = 125;
+    private static final int COOLDOWN = 100;
     private State state;
 
     private final Builder builder;
@@ -99,7 +99,7 @@ public class Armory extends Caste {
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
-                cooldown = COOLDOWN;
+                cooldown = COOLDOWN+Clock.getRoundNum()/200;
             case FAIL:
                 state = State.DELAY;
                 break;

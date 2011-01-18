@@ -37,6 +37,7 @@ public class Fighter extends Caste {
             try {
                 if(com.receive(msgMask) && state != State.ATTACK) {
                     if(com.getCommand() == Communicator.SCATTER) {
+                        System.out.println("$$$ Scattering $$$");
                         if(home != null && com.getDestination().isAdjacentTo(home)) {
                             home = null;
                             state = State.WSEARCH;
@@ -123,8 +124,9 @@ public class Fighter extends Caste {
                 timer = 0;
                 if(home != null)
                     state = State.SEARCH;
-                else
+                else {
                     state = State.WSEARCH;
+                }
             }
         }
 

@@ -168,6 +168,7 @@ public class Communicator {
         int id_now = Clock.getRoundNum();
         int id_prev = MessageID.get(id_now - 1);
         id_now = MessageID.get(id_now);
+        destination = null;
 
         int [] ints;
         MapLocation [] locations;
