@@ -113,14 +113,12 @@ public class Communicator {
                 int ml_length = messages[i].locations.length - 1;
                 int mi_length = messages[i].ints.length - 1;
                 // Can be a do while because all messages that are too short = null
-                System.out.println(ints_length+":"+locs_length+":"+mi_length+":"+ml_length);
                 do {
                     if (messages[i].ints[mi_length] < 0) {
                         ml_length -= 2;
                         mi_length -= 5;
                         continue;
                     }
-                    System.out.println("RESEND");
 
                     message.ints[--ints_length] = messages[i].ints[mi_length--];
                     message.ints[--ints_length] = messages[i].ints[mi_length--];
@@ -180,9 +178,9 @@ public class Communicator {
         //saves bytecode if we don't care about parsing a message
         int high_rank;
         if (bitmask == 0)
-            high_rank = -1000;
-        else
             high_rank = 10000;
+        else
+            high_rank = -1000;
         int distance;
         messages = myRC.getAllMessages();
         int message_count = messages.length;
@@ -190,7 +188,7 @@ public class Communicator {
         int csCache; // Checksum cache;
 
     read:
-        while (--message_count > 0) {
+        while (message_count-- > 0) {
             // 1. Check if ints is null.
             // 2. Check if locations is null.
             // 3. ints needs 6 items.
@@ -211,7 +209,6 @@ public class Communicator {
                 )
             {
                 messages[message_count] = null;
-                System.out.println("FAIL ROUND");
                 continue read;
             }
 
@@ -236,7 +233,6 @@ public class Communicator {
                       !=ints[--ints_length]
                       )
                 {
-                    System.out.println("FAIL");
                     messages[message_count].ints[ints_length+4] = -1;
                     continue;
                 }
@@ -247,22 +243,18 @@ public class Communicator {
                     ints[ints_length] = ints[ints_length+4]^(ints[ints_length+3]<<1)^csCache;
                 } else {
                     ints[ints_length+4] = -1;
-                    System.out.println("DROP");
                 }
 
                 if ((ints[ints_length+2] - ints[ints_length+3]*DM) > high_rank && (bitmask & ints[ints_length+1]) != 0) {
-                    System.out.println("CHOOSE");
                     high_rank = ints[ints_length+2] - ints[ints_length+3]*DM;
                     destination = locations[locs_length+1];
                     mask = ints[ints_length+1];
                 }
-                System.out.println("RECIEVE");
             } while (locs_length > 0);
         }
         if (destination != null) {
             return true;
         } else {
-            destination = null;
             mask = 0;
             return false;
         }
