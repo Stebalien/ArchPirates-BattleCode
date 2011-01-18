@@ -10,7 +10,6 @@ public class Attacker {
 
 	private final RobotController myRC;
     private final RobotProperties myRP;
-    private WeaponController minGun; // not a final but meh...
     // }}}
 
     // {{{ Settings
@@ -26,6 +25,7 @@ public class Attacker {
     private MapLocation runDest;
     private Robot robot;
     private boolean fired; // Only scan if we have not fired recently.
+    private MapLocation lastLoc;
     // }}}
 
     // {{{ Constructors
@@ -53,17 +53,6 @@ public class Attacker {
         this.team = team;
         this.myRC = rp.myRC;
         this.hp = myRC.getHitpoints();
-        int min_range = 1000;
-        int this_range;
-        for (WeaponController gun : guns) {
-            this_range = gun.type().range;
-            if (this_range < min_range) {
-                min_range = this_range;
-                minGun = gun;
-            }
-        }
-        if (min_range == 1000) min_range = 0; // If no guns etc...
-
         setChassis(chassis);
     }
     // }}}
@@ -187,12 +176,6 @@ public class Attacker {
                 mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
                 if (chassisMask == 0 || (chassisMask & bit) != 0)
                 {
-                    // FIXME: see if this is slower/faster. may get rid of withinRange.
-                    //if (minGun.withinRange(tmpRobotInfo.location)) {
-                    //    robotInfo = tmpRobotInfo;
-                    //    robot = r;
-                    //    break;
-                    //} else...
                     if ((tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq) {
                         minDistSq = tmpDistSq;
                         robotInfo = tmpRobotInfo;
@@ -201,6 +184,7 @@ public class Attacker {
                 }
             }
         }
+
 
         // We haven't fired this round and don't know if any guns are active.
         fired = false;
@@ -213,7 +197,14 @@ public class Attacker {
                 if (runDest == null)
                     runDest = myLoc.add(myRC.getDirection().opposite(), 20);
                 return runDest;
-            } else return null;
+            } else if (lastLoc != null) {
+                if (sensor.canSenseSquare(lastLoc)) {
+                    lastLoc = null;
+                } else {
+                    return lastLoc;
+                }
+            }
+            return null;
         }
         hp = new_hp;
         runDest = null;
@@ -230,7 +221,8 @@ public class Attacker {
                 fired = true;
             }
         }
-        return robotInfo.location;
+        lastLoc = robotInfo.location;
+        return lastLoc;
     }
 
     /**
