@@ -32,13 +32,13 @@ public class Miner extends Caste {
         //scout = true;
     }
 
+    @SuppressWarnings("fallthrough")
     public void SM() {
         while(true) {
             try {
                 switch(state) {
                     case OFF:
                         off();
-                        break;
                     case IDLE:
                         idle();
                         break;
@@ -102,6 +102,7 @@ public class Miner extends Caste {
             state = State.OFF;
     }
 
+    /* Not used for now */
     private void build_fighter() {
         Direction dir = Direction.NORTH;
         MapLocation loc = null;

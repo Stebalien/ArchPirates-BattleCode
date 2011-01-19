@@ -114,7 +114,7 @@ public class Builder {
                 if (myRC.getTeamResources() < MULT*this.cost)
                     return TaskState.WAITING;
                 try {
-                    if (builder.canBuild(myRC.getLocation().directionTo(location), level)) {
+                    if (builder.canBuild(chassis, location)) {
                         builder.build(chassis, location);
                         p++;
                         return TaskState.ACTIVE;
@@ -123,8 +123,8 @@ public class Builder {
                         return TaskState.FAIL;
                     }
                 } catch (Exception e) {
-                    //System.out.println("caught exception:");
-                    //e.printStackTrace();
+                    System.out.println("caught exception:");
+                    e.printStackTrace();
                     p = -2;
                     return TaskState.FAIL;
                 }

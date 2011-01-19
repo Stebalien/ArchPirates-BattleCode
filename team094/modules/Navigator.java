@@ -196,7 +196,7 @@ public class Navigator {
      */
     public void setDestination(MapLocation loc, Direction dir, double dist) {
         // restart if this is a new destination
-        if(!loc.equals(bnav_lastDest)) {
+        if(bnav_lastDest == null || !loc.equals(bnav_lastDest)) {
             if(bnav_lastDist != 0)
                 bnav_lastDist = myRC.getLocation().distanceSquaredTo(loc);
             bnav_targetDist = (int)(dist*dist);

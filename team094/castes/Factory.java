@@ -31,6 +31,7 @@ public class Factory extends Caste {
         soldierIDS = new int[MAX_SOLDIERS];
     }
 
+    @SuppressWarnings("fallthrough")
     public void SM() {
         while(true) {
             if(myRC.getHitpoints()/myRC.getMaxHp() < .25)
@@ -39,7 +40,7 @@ public class Factory extends Caste {
                 switch(state) {
                     case INIT:
                         init();
-                        break;
+                        // Fall through instead of calling doBuild()
                     case BUILD_DISH:
                         build_dish();
                         break;
@@ -68,7 +69,6 @@ public class Factory extends Caste {
 
     private void init() throws GameActionException {
         builder.startBuild(false, myRC.getLocation(), RobotLevel.ON_GROUND, ComponentType.DISH);
-        builder.doBuild();
         state = State.BUILD_DISH;
     }
 
@@ -117,6 +117,8 @@ public class Factory extends Caste {
                     builder.startBuild(true, dest, Chassis.MEDIUM, ComponentType.HARDENED, ComponentType.RAILGUN, ComponentType.TELESCOPE);
                     soldierLoc = dest;
                     state = State.BUILD_SOLDIERS;
+                    build_soldiers(); // save a round
+                    return;
                 }
             }
             com.receive();
