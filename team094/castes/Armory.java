@@ -8,16 +8,15 @@ public class Armory extends Caste {
         START,
         IDLE,
         BUILD,
-        DELAY,
         YIELD
     }
-    private static final int COOLDOWN = 100;
+    private static final int MAX_UNITS = 10;
     private State state;
 
     private final Builder builder;
     private MapLocation[] locations;
     private int locIndex,
-                cooldown;
+                units;
 
     public Armory(RobotProperties rp) {
         super(rp);
@@ -40,9 +39,6 @@ public class Armory extends Caste {
                         break;
                     case BUILD:
                         build();
-                        break;
-                    case DELAY:
-                        delay();
                         break;
                     case YIELD:
                     default:
@@ -99,17 +95,15 @@ public class Armory extends Caste {
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
-                cooldown = COOLDOWN+Clock.getRoundNum()/200;
+                units++;
             case FAIL:
-                state = State.DELAY;
+                if(units >= MAX_UNITS)
+                    state = State.YIELD;
+                else
+                    state = State.IDLE;
                 break;
             default:
                 break;
         }
-    }
-
-    private void delay() {
-        if(--cooldown < 1)
-            state = State.IDLE;
     }
 }
