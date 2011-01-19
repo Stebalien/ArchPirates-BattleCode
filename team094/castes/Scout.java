@@ -46,7 +46,6 @@ public class Scout extends Caste {
                 switch(state) {
                     case INIT:
                         init();
-                        break;
                     case WANDER:
                         wander();
                         break;
@@ -58,6 +57,7 @@ public class Scout extends Caste {
                         break;
                     case BUILD_FACTORY:
                         build_factory();
+                        break;
                     case YIELD:
                     default:
                         yield();

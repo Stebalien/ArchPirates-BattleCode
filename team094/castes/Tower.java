@@ -21,13 +21,13 @@ public class Tower extends Caste {
         myLoc = myRC.getLocation();
     }
 
+    @SuppressWarnings("fallthrough")
     public void SM() {
         while(true) {
             try {
                 switch(state) {
                     case SETUP:
                         setup();
-                        break;
                     case DEFEND:
                         defend();
                         break;

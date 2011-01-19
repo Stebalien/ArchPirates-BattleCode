@@ -90,6 +90,7 @@ public class Armory extends Caste {
             if(r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
                 myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
             state = state.BUILD;
+            build(); // Call build function here to save time.
         }
 
         locIndex = (locIndex+1+locations.length)%locations.length;
