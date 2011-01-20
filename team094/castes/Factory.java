@@ -20,6 +20,7 @@ public class Factory extends Caste {
                         soldierLoc;
     private int[] soldierIDS;
     private int soldiers;
+    private int pcount = -1; // where am i in the panic process.
 
     public Factory(RobotProperties rp) {
         super(rp);
@@ -132,15 +133,24 @@ public class Factory extends Caste {
     }
 
     private void panic() throws GameActionException {
-        while(!com.turnOn(soldierIDS)) {
-            com.clear();
-            myRC.yield();
-        } while(!com.send(Communicator.SCATTER, 10000, 0, myLoc)) {
-            com.clear();
-            myRC.yield();
-        } while(!com.send(Communicator.ATTACK, 1000, 2, myLoc)) {
-            com.clear();
-            myRC.yield();
-        }
+        com.receive();
+        if (pcount < 0) {
+            pcount = 5;
+            while(!com.turnOn(soldierIDS)) {
+                com.clear();
+                myRC.yield();
+            }
+        } else if (--pcount == 0) {
+            pcount = 5;
+            while(!com.send(Communicator.SCATTER, 10000, 0, myLoc)) {
+                com.clear();
+                myRC.yield();
+            }
+        } else com.send();
+        // This traps units. !!!!! PLEASE DON'T EVER DO THIS !!!!
+        // while(!com.send(Communicator.ATTACK, 1000, 2, myLoc)) {
+         //   com.clear();
+         //   myRC.yield();
+         //}
     }
 }
