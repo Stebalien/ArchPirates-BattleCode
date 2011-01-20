@@ -45,8 +45,6 @@ public class Armory extends Caste {
                         yield();
                         break;
                 }
-                com.receive();
-                com.send();
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
@@ -76,8 +74,6 @@ public class Armory extends Caste {
                 locations[++locIndex] = m.getLocation();
         }
 
-        builder.startBuild(false, loc, RobotLevel.ON_GROUND, ComponentType.NETWORK);
-        while (builder.doBuild() != TaskState.DONE) myRC.yield();
         state = State.IDLE;
     }
 
