@@ -196,17 +196,19 @@ public class Communicator {
             // 4. The first int must be either the current or the previous id.
             // 5. The the bitmask must be doubled.
             // 6. The mask must match the passed bitmask.
-            // 7. The rebroadcast must be doubled and greater than or equal to 0.
-            // 8. locations needs at least 2 items (source/dest).
+            // 7. locations needs at least 2 items (source/dest).
+            // 8. Only 10 packets allowed per message. -- TODO:TBI
+            // 9. There must be an even number of locations.
+            // 10. The number of locations and ints must match.
             if (  (ints = messages[message_count].ints) == null
                || (locations = messages[message_count].locations) == null
-               || (ints_length = ints.length) < 4
+               || (ints_length = ints.length) < 6
                ||!(  ints[0] == id_now
                   || ints[0] == id_prev
                   )
                || (locs_length = locations.length) < 2
                || (locs_length & 1) != 0
-               || (ints_length - 1) % 5 != 0
+               || ((locs_length>>1)*5)+1 != ints_length
                 )
             {
                 messages[message_count] = null;
