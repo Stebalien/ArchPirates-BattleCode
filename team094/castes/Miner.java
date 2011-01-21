@@ -75,9 +75,9 @@ public class Miner extends Caste {
                     case FLYING:
                         if(ri.location.equals(myLoc)) {
                             if(scout)
-                                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+                                builder.startBuild(true, 1.2, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
                             else
-                                builder.startBuild(true, myLoc, RobotLevel.IN_AIR, ComponentType.ANTENNA, ComponentType.RADAR, ComponentType.SMG);
+                                builder.startBuild(true, 1.2, myLoc, RobotLevel.IN_AIR, ComponentType.ANTENNA, ComponentType.RADAR, ComponentType.SMG);
                             builder.doBuild();
                             state = State.BUILD;
                             return;
@@ -85,7 +85,7 @@ public class Miner extends Caste {
                         break;
                     case BUILDING:
                         if(scouts > 0 && myLoc.isAdjacentTo(ri.location) && !myLoc.directionTo(ri.location).isDiagonal() && myRP.sensor.senseObjectAtLocation(ri.location, RobotLevel.MINE) == null) {
-                            builder.startBuild(true, ri.location, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER);
+                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER);
                             builder.doBuild();
                             state = State.BUILD;
                             return;
@@ -114,7 +114,7 @@ public class Miner extends Caste {
         }
         if (loc == null)
             return;
-        switch(builder.startBuild(true, loc, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
+        switch(builder.startBuild(true, 1.2, loc, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
             case ACTIVE:
             case WAITING:
                 state = State.BUILD;

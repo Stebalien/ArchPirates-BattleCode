@@ -69,14 +69,14 @@ public class Factory extends Caste {
     }
 
     private void init() throws GameActionException {
-        builder.startBuild(false, myRC.getLocation(), RobotLevel.ON_GROUND, ComponentType.DISH);
+        builder.startBuild(false, 1.2, myRC.getLocation(), RobotLevel.ON_GROUND, ComponentType.DISH);
         state = State.BUILD_DISH;
     }
 
     private void build_dish() throws GameActionException {
         switch(builder.doBuild()) {
             case FAIL:
-                builder.startBuild(false, myRC.getLocation(), RobotLevel.ON_GROUND, ComponentType.DISH);
+                builder.startBuild(false, 1.2, myRC.getLocation(), RobotLevel.ON_GROUND, ComponentType.DISH);
                 break;
             case DONE:
                 state = State.IDLE;
@@ -115,7 +115,7 @@ public class Factory extends Caste {
                 MapLocation dest = myLoc.add(d);
                 if(myRC.senseTerrainTile(dest) == TerrainTile.LAND &&
                    myRP.sensor.senseObjectAtLocation(dest, RobotLevel.ON_GROUND) == null) {
-                    builder.startBuild(true, dest, Chassis.MEDIUM, ComponentType.HARDENED, ComponentType.RAILGUN, ComponentType.TELESCOPE);
+                    builder.startBuild(true, 1.2, dest, Chassis.MEDIUM, ComponentType.HARDENED, ComponentType.RAILGUN, ComponentType.TELESCOPE);
                     soldierLoc = dest;
                     state = State.BUILD_SOLDIERS;
                     build_soldiers(); // save a round

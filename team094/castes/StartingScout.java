@@ -104,7 +104,7 @@ public class StartingScout extends Caste {
         } else if(ti == 1) {
             // Found first mine, move towards it and build
             if(nav.bugNavigate(false)) {
-                builder.startBuild(true, targets[1].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
+                builder.startBuild(true, 1, targets[1].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
                 builder.doBuild();
 
                 nav.setDestination(targets[0].getLocation(), 1.9);
@@ -120,7 +120,7 @@ public class StartingScout extends Caste {
                     // but adds time to navigation and builds the armory too far away from home base
                     nav.move(false);
                 } else {
-                    builder.startBuild(true, targets[0].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
+                    builder.startBuild(true, 1, targets[0].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
                     builder.doBuild();
 
                     state = State.BUILD_INIT;
@@ -135,7 +135,7 @@ public class StartingScout extends Caste {
             while(!nav.canMove(d) || !loc.add(d).isAdjacentTo(mLoc))
                 d = d.rotateLeft();
 
-            builder.startBuild(true, myRC.getLocation().add(d), Chassis.BUILDING, ComponentType.ARMORY);
+            builder.startBuild(true, 1, myRC.getLocation().add(d), Chassis.BUILDING, ComponentType.ARMORY);
             builder.doBuild();
             state = State.BUILD_INIT;
         }
@@ -214,7 +214,7 @@ public class StartingScout extends Caste {
                 if(nav.canMoveBackward())
                     nav.move(false);
             } else {
-                builder.startBuild(true, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
+                builder.startBuild(true, 1.05, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
                 builder.doBuild();
                 state = State.BUILD;
             }

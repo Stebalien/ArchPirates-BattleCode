@@ -82,7 +82,7 @@ public class Armory extends Caste {
 
         if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null &&
            r != null) {
-            builder.startBuild(false, locations[locIndex], Chassis.FLYING);
+            builder.startBuild(false, 2, locations[locIndex], Chassis.FLYING);
             if(r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
                 myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
             state = state.BUILD;

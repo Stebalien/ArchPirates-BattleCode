@@ -4,7 +4,6 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 
 public class Builder {
-    private static double MULT = 1.2; // We need at least MULT * RESOURCES to build.
 
     private final BuilderController builder;
     private final RobotController myRC;
@@ -17,6 +16,7 @@ public class Builder {
     private boolean turn_on;
     private int cost;
     private int p = -2; //progress
+    private double res_mult = 1.2; // We need at least res_mult * RESOURCES to build.
 
     /**
      * Builds buildings and robots.
@@ -55,7 +55,8 @@ public class Builder {
      *
      * @return TaskState.WAITING
      */
-    public TaskState startBuild(boolean turn_on, MapLocation location, Chassis chassis, ComponentType... components) {
+    public TaskState startBuild(boolean turn_on, double res_mult, MapLocation location, Chassis chassis, ComponentType... components) {
+        this.res_mult = res_mult;
         this.chassis = chassis;
         this.level = chassis.level;
         this.components = components;
@@ -77,7 +78,8 @@ public class Builder {
      *
      * @return TaskState.WAITING
      */
-    public TaskState startBuild(boolean turn_on, MapLocation location, RobotLevel level, ComponentType... components) {
+    public TaskState startBuild(boolean turn_on, double res_mult, MapLocation location, RobotLevel level, ComponentType... components) {
+        this.res_mult = res_mult;
         this.p = 0;
         this.chassis = null;
         this.level = level;
@@ -120,7 +122,7 @@ public class Builder {
                     p = -2;
                     return TaskState.FAIL;
                 }
-                if (myRC.getTeamResources() < MULT*this.cost)
+                if (myRC.getTeamResources() < res_mult*this.cost)
                     return TaskState.WAITING;
                 try {
                     if (builder.canBuild(chassis, location)) {
@@ -141,7 +143,7 @@ public class Builder {
                 if (components.length == 0) break;
             default:
                 // I don't check if I can still build because the exception doesn't really cost that much and checking this is a PAIN.
-                if (myRC.getTeamResources() < MULT*components[p].cost)
+                if (myRC.getTeamResources() < res_mult*components[p].cost)
                     return TaskState.ACTIVE;
                 else {
                     try {

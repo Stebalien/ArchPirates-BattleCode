@@ -122,7 +122,7 @@ public class Scout extends Caste {
                     MapLocation dest = loc.add(d);
                     if(myRC.senseTerrainTile(dest) == TerrainTile.LAND &&
                        myRP.sensor.senseObjectAtLocation(dest, RobotLevel.ON_GROUND) == null) {
-                        builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.FACTORY);
+                        builder.startBuild(true, 1.2, dest, Chassis.BUILDING, ComponentType.FACTORY);
                         state = State.BUILD_FACTORY;
                     }
                 }
@@ -136,7 +136,7 @@ public class Scout extends Caste {
         } else if(nav.bugNavigate(false)) {
             if(lastMine == null)
                 lastMine = targets[ti].getLocation();
-            builder.startBuild(true, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
+            builder.startBuild(true, 1.05, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
             timeout = 0;
             state = State.BUILD;
         }
@@ -171,7 +171,7 @@ public class Scout extends Caste {
                                && myRC.senseTerrainTile(dest) == TerrainTile.LAND) {
                                 if(!armory && dest.isAdjacentTo(l1)) {
                                     nav.setDestination(dest, 1.8);
-                                    builder.startBuild(true, dest, Chassis.BUILDING, ComponentType.ARMORY);
+                                    builder.startBuild(true, 1.2, dest, Chassis.BUILDING, ComponentType.ARMORY);
                                     timeout = 0;
                                     armory = true;
                                 } else if(!lastMine.directionTo(dest).isDiagonal()) {
@@ -208,7 +208,7 @@ public class Scout extends Caste {
                 towerLoc = null;
             case DONE:
                 if(towerLoc != null) {
-                    builder.startBuild(true, towerLoc, Chassis.BUILDING);
+                    builder.startBuild(true, 1.3, towerLoc, Chassis.BUILDING);
                     towerLoc = null;
                     timeout = 0;
                 } else {
