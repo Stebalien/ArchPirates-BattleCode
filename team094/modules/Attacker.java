@@ -23,7 +23,6 @@ public class Attacker {
     private Robot [] robots;
     private double hp;
     private MapLocation runDest;
-    private boolean fired; // Only scan if we have not fired recently.
     private MapLocation lastLoc;
     // }}}
 
@@ -122,8 +121,8 @@ public class Attacker {
         RobotInfo robotInfo = null, tmpRobotInfo = null;
         MapLocation myLoc = myRC.getLocation();
         int bit = 0;
-        rank = 0;
-        mask = 0;
+        int rank = 0;
+        int mask = 0;
 
         int tmpDistSq, minDistSq = 1000;
 
@@ -145,45 +144,37 @@ public class Attacker {
                 }
             }
         }
+        // Don't reference global varaibles too much.
+        this.rank = rank;
+        this.mask = mask;
 
 
-        // We haven't fired this round and don't know if any guns are active.
-        fired = false;
 
         // Return if nothing is within sensor range but return behind if I am being attacked and can't see my attacker.
         double new_hp = myRC.getHitpoints();
         if (robotInfo == null) {
             if (new_hp < hp) {
-                hp = new_hp;
                 if (runDest == null)
                     runDest = myLoc.add(myRC.getDirection().opposite(), 20);
+                hp = new_hp;
                 return runDest;
-            } else if (lastLoc != null) {
-                if (sensor.canSenseSquare(lastLoc)) {
-                    lastLoc = null;
-                } else {
-                    return lastLoc;
-                }
-            }
-            return null;
+            } else if (lastLoc != null && sensor.canSenseSquare(lastLoc))
+                lastLoc = null;
+            hp = new_hp;
+            return lastLoc;
         }
-        hp = new_hp;
         runDest = null;
+        hp = new_hp;
 
         for (WeaponController gun : guns) {
-            if (!gun.isActive()) {
-                try {
-                    if (gun.withinRange(robotInfo.location)) {
-                        gun.attackSquare(robotInfo.location, robotInfo.robot.getRobotLevel());
-                        fired = true;
-                    }
-                } catch(GameActionException e) {e.printStackTrace();}
-            } else {
-                fired = true;
-            }
+            if (gun.isActive())
+                continue;
+            try {
+                if (gun.withinRange(robotInfo.location))
+                    gun.attackSquare(robotInfo.location, robotInfo.robot.getRobotLevel());
+            } catch(GameActionException e) {e.printStackTrace();}
         }
-        lastLoc = robotInfo.location;
-        return lastLoc;
+        return (lastLoc = robotInfo.location);
     }
 
     /**
@@ -197,13 +188,20 @@ public class Attacker {
     public MapLocation autoFire(WeaponController weapon) throws GameActionException {
         RobotInfo robotInfo = null, tmpRobotInfo = null;
         robots = sensor.senseNearbyGameObjects(Robot.class);
+        int bit = 0;
+        int rank = 0;
+        int mask = 0;
 
         // Find a new target
         for (Robot r : robots) {
             if (team != r.getTeam())
                 continue;
             tmpRobotInfo = sensor.senseRobotInfo(r);
-            if ((chassisMask == 0 || (chassisMask & (1 << tmpRobotInfo.chassis.ordinal())) != 0)) 
+
+            rank += tmpRobotInfo.chassis.cost;
+            mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
+
+            if ((chassisMask == 0 || (chassisMask & bit) != 0))
             {
                 robotInfo = tmpRobotInfo;
                 if (weapon.withinRange(robotInfo.location)) {
@@ -212,23 +210,34 @@ public class Attacker {
             }
         }
 
-        // We haven't fired this round and don't know if any guns are active.
-        fired = false;
+        // Don't reference global varaibles too much.
+        this.rank = rank;
+        this.mask = mask;
 
-        // Return if nothing is within range
+
+        // Return if nothing is within sensor range but return behind if I am being attacked and can't see my attacker.
+        double new_hp = myRC.getHitpoints();
         if (robotInfo == null) {
-            return null;
-        } else if (!weapon.isActive()) {
-            try {
-                if (weapon.withinRange(robotInfo.location)) {
-                    weapon.attackSquare(robotInfo.location, robotInfo.robot.getRobotLevel());
-                    fired = true;
-                }
-            } catch(GameActionException e) {e.printStackTrace();}
-        } else {
-            fired = true;
+            if (new_hp < hp) {
+                if (runDest == null)
+                    runDest = myRC.getLocation().add(myRC.getDirection().opposite(), 20);
+                hp = new_hp;
+                return runDest;
+            } else if (lastLoc != null && sensor.canSenseSquare(lastLoc))
+                lastLoc = null;
+            hp = new_hp;
+            return lastLoc;
         }
-        return robotInfo.location;
+        runDest = null;
+        hp = new_hp;
+
+        if (!weapon.isActive()) {
+            try {
+                if (weapon.withinRange(robotInfo.location))
+                    weapon.attackSquare(robotInfo.location, robotInfo.robot.getRobotLevel());
+            } catch(GameActionException e) {e.printStackTrace();}
+        }
+        return (lastLoc = robotInfo.location);
     }
     // }}}
 }
