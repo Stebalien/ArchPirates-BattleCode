@@ -164,11 +164,11 @@ public class Builder {
             try {
                 if (turn_on)
                     myRC.turnOn(location, level);
+                p = -2;
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
                 return TaskState.FAIL;
-            } finally {
                 p = -2;
             }
             return TaskState.DONE;

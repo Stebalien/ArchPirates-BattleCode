@@ -46,33 +46,33 @@ public class Scout extends Caste {
     public void SM() {
         while(true) {
             try {
-                if (run()) continue;
-                switch(state) {
-                    case INIT:
-                        init();
-                    case WANDER:
-                        wander();
-                        break;
-                    case BUILD:
-                        build();
-                        break;
-                    case BUILD_ARMORY:
-                        build_armory();
-                        break;
-                    case BUILD_FACTORY:
-                        build_factory();
-                        break;
-                    case YIELD:
-                    default:
-                        yield();
-                        break;
+                if (!run()) {
+                    switch(state) {
+                        case INIT:
+                            init();
+                        case WANDER:
+                            wander();
+                            break;
+                        case BUILD:
+                            build();
+                            break;
+                        case BUILD_ARMORY:
+                            build_armory();
+                            break;
+                        case BUILD_FACTORY:
+                            build_factory();
+                            break;
+                        case YIELD:
+                        default:
+                            yield();
+                            break;
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
-            } finally {
-                myRC.yield();
             }
+            myRC.yield();
         }
     }
 
