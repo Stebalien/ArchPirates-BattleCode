@@ -89,6 +89,15 @@ public class Builder {
     }
 
     /**
+     * Weather or not we are in the process of building somthing.
+     *
+     * @return true if building.
+     */
+    public boolean isBuilding() {
+        return (p >= -1);
+    }
+
+    /**
      * Continue building until DONE or FAIL.
      *
      * @return The state of the build.

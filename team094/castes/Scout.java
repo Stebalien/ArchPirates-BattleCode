@@ -27,9 +27,12 @@ public class Scout extends Caste {
                         home;
     private int ti,
                 timeout;
+    private double health;
+    private int runCooldown = -1;
 
     public Scout(RobotProperties rp){
         super(rp);
+        health = myRC.getHitpoints();
 
         state = State.INIT;
         builder = new Builder(rp);
@@ -43,6 +46,7 @@ public class Scout extends Caste {
     public void SM() {
         while(true) {
             try {
+                if (run()) continue;
                 switch(state) {
                     case INIT:
                         init();
@@ -66,10 +70,9 @@ public class Scout extends Caste {
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
+            } finally {
+                myRC.yield();
             }
-
-//            System.out.println(Clock.getBytecodeNum());
-            myRC.yield();
         }
     }
 
@@ -77,6 +80,22 @@ public class Scout extends Caste {
     private void init() {
         ti = -1;
         state = State.WANDER;
+    }
+    private boolean run() throws GameActionException {
+        double tmp_health = myRC.getHitpoints();
+        runCooldown--;
+        if (tmp_health < health) {
+            runCooldown = 5;
+            nav.move(false);
+            health = tmp_health;
+            return true;
+        } else if (runCooldown == 0) {
+            nav.setDirection(myRC.getDirection().opposite());
+            health = tmp_health;
+            return true;
+        }
+        health = tmp_health;
+        return false;
     }
 
     private void wander() throws GameActionException {
