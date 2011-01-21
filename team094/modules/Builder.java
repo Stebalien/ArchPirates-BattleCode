@@ -49,6 +49,7 @@ public class Builder {
      * Note, this method will NOT check if you can actually build said chassis/components.
      *
      * @param turn_on turns the robot on if true.
+     * @param res_mult The resource multiplier for this build.
      * @param location The location where the robot will be built.
      * @param chassis The chassis that will be built.
      * @param components A list of components (if any) that will be built on this chassis.
@@ -72,6 +73,7 @@ public class Builder {
      * Note, this method will NOT check if you can actually build said components.
      *
      * @param turn_on turns the robot on if true.
+     * @param res_mult The resource multiplier for this build.
      * @param location The location where the components will be built.
      * @param level The level at which the components will be built.
      * @param components A list of components (if any) that will be built on this chassis.
