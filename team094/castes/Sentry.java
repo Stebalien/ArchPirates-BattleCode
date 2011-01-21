@@ -129,7 +129,7 @@ public class Sentry extends Caste {
                 com.send();
             }
             MapLocation myLoc = myRC.getLocation();
-            if (myRC.getLocation().distanceSquaredTo(l) < 16)
+            if (myRC.getLocation().distanceSquaredTo(l) < 25)
                 nav.move(false);
             else
                 nav.setDestination(l, 5);
