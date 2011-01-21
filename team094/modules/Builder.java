@@ -170,8 +170,8 @@ public class Builder {
             } catch (Exception e) {
                 System.out.println("caught exception:");
                 e.printStackTrace();
-                return TaskState.FAIL;
                 p = -2;
+                return TaskState.FAIL;
             }
             return TaskState.DONE;
         } else {
