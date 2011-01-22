@@ -25,7 +25,7 @@ public class Fighter extends Caste {
     public Fighter(RobotProperties rp){
         super(rp);
         state = State.SEARCH;
-        attacker = new Attacker(rp);
+        attacker = new Attacker(rp, true);
 
         home = myRC.getLocation();
 

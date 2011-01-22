@@ -10,11 +10,13 @@ public class Attacker {
 
 	private final RobotController myRC;
     private final RobotProperties myRP;
+    private WeaponController minGun;
     // }}}
 
     // {{{ Settings
     private int chassisMask;
 	private Team team;
+    private boolean debris;
     // }}}
 
     // {{{ Cache
@@ -32,8 +34,8 @@ public class Attacker {
      *
      * @param properties The properties of the controlling robot.
      */
-    public Attacker(RobotProperties rp, Chassis... chassis) {
-        this(rp, rp.opTeam, chassis);
+    public Attacker(RobotProperties rp, boolean debris, Chassis... chassis) {
+        this(rp, rp.opTeam, debris, chassis);
     }
 
     /**
@@ -43,7 +45,7 @@ public class Attacker {
      * @param team The team that the robot is on.
      * @param chassis A list of chassis to target.
      */
-    public Attacker(RobotProperties rp, Team team, Chassis... chassis) {
+    public Attacker(RobotProperties rp, Team team, boolean debris, Chassis... chassis) {
         this.myRP = rp;
         this.sensor = rp.sensor;
         this.guns = rp.guns;
@@ -51,6 +53,18 @@ public class Attacker {
         this.team = team;
         this.myRC = rp.myRC;
         this.hp = myRC.getHitpoints();
+        this.debris = debris;
+
+        int min_range = 1000;
+        int this_range;
+        for (WeaponController gun : guns) {
+            this_range = gun.type().range;
+            if (this_range < min_range) {
+                min_range = this_range;
+                minGun = gun;
+            }
+        }
+
         setChassis(chassis);
     }
     // }}}
@@ -76,9 +90,16 @@ public class Attacker {
      * @param team the team that will be targeted.
      */
     public void setTeam(Team team) {
-        if (this.team != team) {
-            this.team = team;
-        }
+        this.team = team;
+    }
+
+    /**
+     * Set weather or not debris are targeted.
+     *
+     * @param debris true if debris should be targeted
+     */
+    public void setDebris(boolean debris) {
+        this.debris = debris;
     }
     // }}}
 
@@ -111,14 +132,12 @@ public class Attacker {
 
     // {{{ Auto Fire
     /**
-     * Fire all guns on targets.
+     * Fire all guns.
      *
-     * @param targeter The targeter.
-     *
-     * @return The location of the currently targeted robot.
+     * @return The location of the currently targeted robot or debris.
      */
     public MapLocation autoFire() throws GameActionException {
-        RobotInfo robotInfo = null, tmpRobotInfo = null;
+        RobotInfo robotInfo = null, tmpRobotInfo = null, debrisRobotInfo = null;
         MapLocation myLoc = myRC.getLocation();
         int bit = 0;
         int rank = 0;
@@ -130,17 +149,21 @@ public class Attacker {
 
         // Find a new target
         for (Robot r : robots) {
-            if (team != r.getTeam())
-                continue;
-            tmpRobotInfo = sensor.senseRobotInfo(r);
+            if (debris && debrisRobotInfo == null && r.getTeam() == Team.NEUTRAL) {
+                tmpRobotInfo = sensor.senseRobotInfo(r);
+                if (minGun.withinRange(tmpRobotInfo.location))
+                    debrisRobotInfo = tmpRobotInfo;
+            } else if (team == r.getTeam()) {
+                tmpRobotInfo = sensor.senseRobotInfo(r);
 
-            rank += tmpRobotInfo.chassis.cost;
-            mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
-            if (chassisMask == 0 || (chassisMask & bit) != 0)
-            {
-                if ((tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq) {
-                    minDistSq = tmpDistSq;
-                    robotInfo = tmpRobotInfo;
+                rank += tmpRobotInfo.chassis.cost;
+                mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
+                if (chassisMask == 0 || (chassisMask & bit) != 0)
+                {
+                    if ((tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq) {
+                        minDistSq = tmpDistSq;
+                        robotInfo = tmpRobotInfo;
+                    }
                 }
             }
         }
@@ -148,14 +171,22 @@ public class Attacker {
         this.rank = rank;
         this.mask = mask;
 
-
-
         // Return if nothing is within sensor range but return behind if I am being attacked and can't see my attacker.
         double new_hp = myRC.getHitpoints();
         if (robotInfo == null) {
+            if (debrisRobotInfo != null) {
+                for (WeaponController gun : guns) {
+                    if (gun.isActive())
+                        continue;
+                    try {
+                        if (gun.withinRange(debrisRobotInfo.location))
+                            gun.attackSquare(debrisRobotInfo.location, debrisRobotInfo.robot.getRobotLevel());
+                    } catch(GameActionException e) {e.printStackTrace();}
+                }
+            }
             if (new_hp < hp) {
                 if (runDest == null)
-                    runDest = myLoc.add(myRC.getDirection().opposite(), 20);
+                    runDest = myRC.getLocation().add(myRC.getDirection().opposite(), 20);
                 hp = new_hp;
                 return runDest;
             } else if (lastLoc != null && sensor.canSenseSquare(lastLoc))
@@ -186,7 +217,7 @@ public class Attacker {
      * @return The location of the currently targeted robot.
      */
     public MapLocation autoFire(WeaponController weapon) throws GameActionException {
-        RobotInfo robotInfo = null, tmpRobotInfo = null;
+        RobotInfo robotInfo = null, tmpRobotInfo = null, debrisRobotInfo = null;
         robots = sensor.senseNearbyGameObjects(Robot.class);
         int bit = 0;
         int rank = 0;
@@ -194,18 +225,22 @@ public class Attacker {
 
         // Find a new target
         for (Robot r : robots) {
-            if (team != r.getTeam())
-                continue;
-            tmpRobotInfo = sensor.senseRobotInfo(r);
+            if (debris && debrisRobotInfo == null && r.getTeam() == Team.NEUTRAL) {
+                tmpRobotInfo = sensor.senseRobotInfo(r);
+                if (weapon.withinRange(tmpRobotInfo.location))
+                    debrisRobotInfo = tmpRobotInfo;
+            } else if (team == r.getTeam())  {
+                tmpRobotInfo = sensor.senseRobotInfo(r);
 
-            rank += tmpRobotInfo.chassis.cost;
-            mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
+                rank += tmpRobotInfo.chassis.cost;
+                mask |= (bit = (1 << tmpRobotInfo.chassis.ordinal()));
 
-            if ((chassisMask == 0 || (chassisMask & bit) != 0))
-            {
-                robotInfo = tmpRobotInfo;
-                if (weapon.withinRange(robotInfo.location)) {
-                    break;
+                if ((chassisMask == 0 || (chassisMask & bit) != 0))
+                {
+                    robotInfo = tmpRobotInfo;
+                    if (weapon.withinRange(robotInfo.location)) {
+                        break;
+                    }
                 }
             }
         }
@@ -214,10 +249,16 @@ public class Attacker {
         this.rank = rank;
         this.mask = mask;
 
-
         // Return if nothing is within sensor range but return behind if I am being attacked and can't see my attacker.
         double new_hp = myRC.getHitpoints();
         if (robotInfo == null) {
+            if (debrisRobotInfo != null) {
+                if (!weapon.isActive()) {
+                    try {
+                        weapon.attackSquare(debrisRobotInfo.location, debrisRobotInfo.robot.getRobotLevel()); // we already know that this is within range.
+                    } catch(GameActionException e) {e.printStackTrace();}
+                }
+            }
             if (new_hp < hp) {
                 if (runDest == null)
                     runDest = myRC.getLocation().add(myRC.getDirection().opposite(), 20);

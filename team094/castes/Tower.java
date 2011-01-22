@@ -62,7 +62,7 @@ public class Tower extends Caste {
         state = State.DEFEND;
         myRC.turnOff();
         myRP.update();
-        attacker = new Attacker(myRP);
+        attacker = new Attacker(myRP, true);
     }
 
     private void defend() throws GameActionException {

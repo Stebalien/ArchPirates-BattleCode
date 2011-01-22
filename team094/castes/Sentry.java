@@ -22,7 +22,7 @@ public class Sentry extends Caste {
         super(rp);
 
         state = State.ORIENT;
-        attacker = new Attacker(rp);
+        attacker = new Attacker(rp, true);
 
         bitmask = (Communicator.ATTACK|Communicator.DEFEND);
     }
