@@ -11,7 +11,7 @@ public class Armory extends Caste {
         DELAY,
         YIELD
     }
-    private static final int MAX_UNITS = 10,
+    private static final int MAX_UNITS = 20,
                              DELAY = 100;
     private State state;
 
@@ -88,6 +88,8 @@ public class Armory extends Caste {
             builder.startBuild(false, 2, locations[locIndex], Chassis.FLYING);
             state = state.BUILD;
             build(); // Call build function here to save time.
+        } else {
+            locIndex = (locIndex+1+locations.length)%locations.length;
         }
     }
 
@@ -100,15 +102,18 @@ public class Armory extends Caste {
                 break;
             case DONE:
                 units++;
-                locIndex = (locIndex+1+locations.length)%locations.length;
-                cooldown = DELAY;
                 state = state.DELAY;
+                cooldown = DELAY;
+                locIndex = (locIndex+1+locations.length)%locations.length;
                 break;
             case FAIL:
-                if(units >= MAX_UNITS)
-                    state = State.YIELD;
-                else
-                    state = State.IDLE;
+                locIndex = (locIndex+1+locations.length)%locations.length;
+                state = State.IDLE;
+                break;
+            case ACTIVE:
+                Robot r = (Robot)myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
+                if(r != null && r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
+                    myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
                 break;
             default:
                 break;

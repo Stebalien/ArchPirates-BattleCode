@@ -40,7 +40,7 @@ public abstract class Caste {
                 if (myRP.builder != null)
                     return new StartingScout(myRP);
                 else
-                    return new Fighter(myRP);
+                    return new Soldier(myRP);
             case MEDIUM:
                 return new Fighter(myRP);
             case HEAVY:
@@ -54,7 +54,10 @@ public abstract class Caste {
                 if(myRP.builder != null) {
                     switch (myRP.builder.type()) {
                         case RECYCLER:
-                            return new Miner(myRP);
+                            if(Clock.getRoundNum() < 250)
+                                return new StartingMine(myRP);
+                            else
+                                return new SoldierTower(myRP);
                         case ARMORY:
                             return new Armory(myRP);
                         case FACTORY:
