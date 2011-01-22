@@ -169,6 +169,14 @@ public class StartingScout extends Caste {
     }
 
     private void find_wall() throws GameActionException {
+        ///////////////////////////////////////////////
+        ////// Remove this to keep scout alive ////////
+        ///////////////////////////////////////////////
+        myRC.suicide();
+
+
+
+
         // Navigate towards 0,0, looking for map boundaries
         nav.bugNavigate(false);
 

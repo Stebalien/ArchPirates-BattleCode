@@ -8,15 +8,18 @@ public class Armory extends Caste {
         START,
         IDLE,
         BUILD,
+        DELAY,
         YIELD
     }
-    private static final int MAX_UNITS = 10;
+    private static final int MAX_UNITS = 20,
+                             DELAY = 100;
     private State state;
 
     private final Builder builder;
     private MapLocation[] locations;
     private int locIndex,
-                units;
+                units,
+                cooldown;
 
     public Armory(RobotProperties rp) {
         super(rp);
@@ -39,6 +42,9 @@ public class Armory extends Caste {
                         break;
                     case BUILD:
                         build();
+                        break;
+                    case DELAY:
+                        delay();
                         break;
                     case YIELD:
                     default:
@@ -78,18 +84,13 @@ public class Armory extends Caste {
     }
 
     private void idle() throws GameActionException {
-        Robot r = (Robot)myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
-
-        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null &&
-           r != null) {
+        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null) {
             builder.startBuild(false, 2, locations[locIndex], Chassis.FLYING);
-            if(r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
-                myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
             state = state.BUILD;
             build(); // Call build function here to save time.
+        } else {
+            locIndex = (locIndex+1+locations.length)%locations.length;
         }
-
-        locIndex = (locIndex+1+locations.length)%locations.length;
     }
 
     @SuppressWarnings("fallthrough")
@@ -97,14 +98,30 @@ public class Armory extends Caste {
         switch (builder.doBuild()) {
             case DONE:
                 units++;
+                state = state.DELAY;
+                cooldown = DELAY;
+                locIndex = (locIndex+1+locations.length)%locations.length;
+                break;
             case FAIL:
-                if(units >= MAX_UNITS)
-                    state = State.YIELD;
-                else
-                    state = State.IDLE;
+                locIndex = (locIndex+1+locations.length)%locations.length;
+                state = State.IDLE;
+                break;
+            case ACTIVE:
+                Robot r = (Robot)myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
+                if(r != null && r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
+                    myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
                 break;
             default:
                 break;
+        }
+    }
+
+    private void delay() {
+        if(--cooldown <= 0) {
+                if(units >= MAX_UNITS)
+                    state = State.YIELD;
+                else
+                    state = state.IDLE;
         }
     }
 }
