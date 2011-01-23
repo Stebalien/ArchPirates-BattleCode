@@ -36,7 +36,10 @@ public class Scout extends Caste {
     public void SM() {
         while(true) {
             try {
-                if (run()) continue;
+                if (run()) {
+                    myRC.yield();
+                    continue;
+                }
                 switch(state) {
                     case WANDER:
                         wander();
@@ -60,19 +63,25 @@ public class Scout extends Caste {
 
     private boolean run() throws GameActionException {
         double tmp_health = myRC.getHitpoints();
-        runCooldown--;
-        if (tmp_health < health) {
-            runCooldown = 5;
-            nav.move(false);
-            health = tmp_health;
-            return true;
-        } else if (runCooldown == 0) {
+
+        if(runCooldown < 0) {
+            if (tmp_health < health) {
+                runCooldown = 5;
+                nav.move(false);
+                return true;
+            } else {
+                return false;
+            }
+        } else if(runCooldown == 0) {
             nav.setDirection(myRC.getDirection().opposite());
+            runCooldown--;
             health = tmp_health;
+            return false;
+        } else {
+            runCooldown--;
+            nav.move(false);
             return true;
         }
-        health = tmp_health;
-        return false;
     }
 
     private void wander() throws GameActionException {

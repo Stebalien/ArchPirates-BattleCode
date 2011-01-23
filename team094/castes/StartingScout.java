@@ -135,7 +135,7 @@ public class StartingScout extends Caste {
             while(!nav.canMove(d) || !loc.add(d).isAdjacentTo(mLoc))
                 d = d.rotateLeft();
 
-            builder.startBuild(true, 1, myRC.getLocation().add(d), Chassis.BUILDING, ComponentType.ARMORY);
+            builder.startBuild(false, 1, myRC.getLocation().add(d), Chassis.BUILDING, ComponentType.ARMORY);
             builder.doBuild();
             state = State.BUILD_INIT;
         }
@@ -149,6 +149,13 @@ public class StartingScout extends Caste {
                 ti--;
                 state = State.FIND_INIT;
             } else {
+                myRC.turnOn(targets[0].getLocation(), RobotLevel.ON_GROUND);
+
+                ///////////////////////////////////////////////
+                ////// Remove this to keep scout alive ////////
+                ///////////////////////////////////////////////
+                myRC.suicide();
+
                 nav.setDestination(new MapLocation(0, 0));
                 state = State.FIND_WALL;
             }
@@ -169,14 +176,6 @@ public class StartingScout extends Caste {
     }
 
     private void find_wall() throws GameActionException {
-        ///////////////////////////////////////////////
-        ////// Remove this to keep scout alive ////////
-        ///////////////////////////////////////////////
-        myRC.suicide();
-
-
-
-
         // Navigate towards 0,0, looking for map boundaries
         nav.bugNavigate(false);
 
