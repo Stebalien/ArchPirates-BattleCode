@@ -110,7 +110,6 @@ public class Armory extends Caste {
         }
     }
 
-    @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
@@ -135,10 +134,10 @@ public class Armory extends Caste {
 
     private void delay() {
         if(--cooldown <= 0) {
-                if(units >= MAX_UNITS)
-                    state = State.YIELD;
-                else
-                    state = state.IDLE;
+            if(units >= MAX_UNITS)
+                state = State.YIELD;
+            else
+                state = State.IDLE;
         }
     }
 }

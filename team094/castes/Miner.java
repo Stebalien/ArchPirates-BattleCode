@@ -10,8 +10,8 @@ public class Miner extends Caste {
         BUILD,
         YIELD
     }
-    private static final int MAX_SCOUTS = 3,
-                             OFF_ROUNDS = 20;
+    private static final int MAX_SCOUTS = 10,
+                             OFF_ROUNDS = 5;
 
     private final Builder builder;
     private final MapLocation myLoc; // Buildings can't move.
