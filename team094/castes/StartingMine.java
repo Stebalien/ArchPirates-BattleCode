@@ -12,12 +12,14 @@ public class StartingMine extends Caste {
         YIELD
     }
     private static final int OFF_ROUNDS = 5;
+    private final int RESOURCES;
 
     private final Builder builder;
     private final MapLocation myLoc; // Buildings can't move.
 
     private State state;
     private int offCounter;
+    private boolean sentry;
 
     public StartingMine(RobotProperties rp){
         super(rp);
@@ -27,6 +29,9 @@ public class StartingMine extends Caste {
         myLoc = myRC.getLocation();
 
         builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD);
+        sentry = false;
+
+        RESOURCES = 500+(10000-Clock.getRoundNum())/2;
     }
 
     @SuppressWarnings("fallthrough")
@@ -78,12 +83,40 @@ public class StartingMine extends Caste {
     }
 
     private void idle() throws GameActionException {
-        Robot r = (Robot)myRP.sensor.senseObjectAtLocation(myLoc, RobotLevel.IN_AIR);
-        if(r != null && r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on) {
-            builder.startBuild(true, 1.2, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
-            builder.doBuild();
-            state = State.BUILD;
-        } else if(++offCounter >= OFF_ROUNDS) {
+        Robot[] nearby = myRP.sensor.senseNearbyGameObjects(Robot.class);
+        for(Robot r: nearby) {
+            if(r != null && r.getTeam() == myRP.myTeam) {
+                RobotInfo ri = myRP.sensor.senseRobotInfo(r);
+                if(!ri.on) {
+                    switch(ri.chassis) {
+                    case FLYING:
+                        if(ri.location.equals(myLoc)) {
+                            if(sentry)
+                                builder.startBuild(true, 1.2, myLoc, RobotLevel.IN_AIR, ComponentType.ANTENNA, ComponentType.RADAR, ComponentType.SMG);
+                            else
+                                builder.startBuild(true, 1.2, myLoc, RobotLevel.IN_AIR, ComponentType.SIGHT, ComponentType.CONSTRUCTOR);
+
+                            builder.doBuild();
+                            state = State.BUILD;
+                            return;
+                        }
+                        break;
+                    case BUILDING:
+                        if(myLoc.isAdjacentTo(ri.location) && !myLoc.directionTo(ri.location).isDiagonal() && myRP.sensor.senseObjectAtLocation(ri.location, RobotLevel.MINE) == null) {
+                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
+                            builder.doBuild();
+                            state = State.BUILD;
+                            return;
+                        }
+                        break;
+                    default:
+                        continue;
+                    }
+                }
+            }
+        }
+
+        if(++offCounter >= OFF_ROUNDS) {
             state = State.OFF;
         }
     }
@@ -92,6 +125,7 @@ public class StartingMine extends Caste {
     private void build() throws GameActionException {
         switch (builder.doBuild()) {
             case DONE:
+                sentry = !sentry;
             case FAIL:
                 state = State.OFF;
                 break;

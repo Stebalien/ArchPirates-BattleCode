@@ -16,6 +16,8 @@ public class Armory extends Caste {
     private State state;
 
     private final Builder builder;
+    private final Attacker attacker;
+    private SensorController mySensor;
     private MapLocation[] locations;
     private int locIndex,
                 units,
@@ -28,11 +30,26 @@ public class Armory extends Caste {
 
         state = State.START;
         builder = new Builder(rp);
+        attacker = new Attacker(rp, false);
+
+        for(ComponentController c: myRC.components()) {
+            if(c.type() == ComponentType.BUILDING_SENSOR) {
+                mySensor = (SensorController)c;
+                break;
+            }
+        }
     }
 
     public void SM() {
+        MapLocation l;
+
         while(true) {
             try {
+                if((l = attacker.autoFire()) != null)
+                    nav.setDirection(myRC.getLocation().directionTo(l));
+                else
+                    nav.setDirection(myRC.getDirection().opposite());
+
                 switch(state) {
                     case START:
                         start();
@@ -63,7 +80,7 @@ public class Armory extends Caste {
     private void start() throws GameActionException {
         MapLocation loc = myRC.getLocation();
 
-        Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
+        Mine[] mines = mySensor.senseNearbyGameObjects(Mine.class);
         int numLoc = 0;
         for(int i = 0; i < mines.length; i++) {
             MapLocation mloc = mines[i].getLocation();
@@ -84,7 +101,7 @@ public class Armory extends Caste {
     }
 
     private void idle() throws GameActionException {
-        if(myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null) {
+        if(mySensor.senseObjectAtLocation(locations[locIndex], RobotLevel.IN_AIR) == null) {
             builder.startBuild(false, 2, locations[locIndex], Chassis.FLYING);
             state = state.BUILD;
             build(); // Call build function here to save time.
@@ -107,8 +124,8 @@ public class Armory extends Caste {
                 state = State.IDLE;
                 break;
             case ACTIVE:
-                Robot r = (Robot)myRP.sensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
-                if(r != null && r.getTeam() == myRP.myTeam && !myRP.sensor.senseRobotInfo(r).on)
+                Robot r = (Robot)mySensor.senseObjectAtLocation(locations[locIndex], RobotLevel.ON_GROUND);
+                if(r != null && r.getTeam() == myRP.myTeam && !mySensor.senseRobotInfo(r).on)
                     myRC.turnOn(locations[locIndex], RobotLevel.ON_GROUND);
                 break;
             default:

@@ -85,7 +85,7 @@ public class Miner extends Caste {
                         break;
                     case BUILDING:
                         if(scouts > 0 && myLoc.isAdjacentTo(ri.location) && !myLoc.directionTo(ri.location).isDiagonal() && myRP.sensor.senseObjectAtLocation(ri.location, RobotLevel.MINE) == null) {
-                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER, ComponentType.BLASTER);
+                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
                             builder.doBuild();
                             state = State.BUILD;
                             return;
@@ -100,30 +100,6 @@ public class Miner extends Caste {
 
         if(++offCounter >= OFF_ROUNDS)
             state = State.OFF;
-    }
-
-    /* Not used for now */
-    private void build_fighter() {
-        Direction dir = Direction.NORTH;
-        MapLocation loc = null;
-        for (int i = 8; --i > 0;) {
-            if (myRP.motor.canMove(dir = dir.rotateLeft())) {
-                loc = myLoc.add(dir);
-                break;
-            }
-        }
-        if (loc == null)
-            return;
-        switch(builder.startBuild(true, 1.2, loc, Chassis.LIGHT, ComponentType.SMG, ComponentType.ANTENNA, ComponentType.RADAR)) {
-            case ACTIVE:
-            case WAITING:
-                state = State.BUILD;
-                break;
-            case FAIL:
-            default:
-                state = State.IDLE;
-                break;
-        }
     }
 
     @SuppressWarnings("fallthrough")

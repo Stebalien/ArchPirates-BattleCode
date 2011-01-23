@@ -30,7 +30,7 @@ public class Soldier extends Caste {
         while(true) {
             try {
                 if(com.receive(msgMask)) {
-                    nav.setDestination(com.getDestination(), 3);
+                    nav.setDestination(com.getDestination(), 6);
                     target = com.getDestination();
                     state = State.GO;
                     com.send();
@@ -112,7 +112,7 @@ public class Soldier extends Caste {
     private void search() throws GameActionException {
         MapLocation l;
         if((l = attacker.autoFire()) != null) {
-            nav.setDestination(l, 4);
+            nav.setDestination(l, 6);
             nav.bugNavigate(true);
             state = State.ATTACK;
         } else if(timer > 7) {
@@ -126,7 +126,7 @@ public class Soldier extends Caste {
     private void go() throws GameActionException {
         MapLocation l;
         if((l = attacker.autoFire()) != null) {
-            nav.setDestination(l, 4);
+            nav.setDestination(l, 6);
             nav.bugNavigate(true);
             state = State.ATTACK;
         } else if(nav.bugNavigate(true)) {
@@ -139,7 +139,7 @@ public class Soldier extends Caste {
         MapLocation l;
         if((l = attacker.autoFire()) == null) {
             if(target != null) {
-                nav.setDestination(target, 4);
+                nav.setDestination(target, 6);
                 state = state.GO;
             } else {
                 timer = 0;
@@ -149,6 +149,9 @@ public class Soldier extends Caste {
             nav.setDestination(l);
         }
 
-        nav.bugNavigate(true);
+        if(l != null && myRC.getLocation().distanceSquaredTo(l) <= 25)
+            nav.move(false);
+        else
+            nav.bugNavigate(true);
     }
 }
