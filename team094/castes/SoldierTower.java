@@ -5,14 +5,16 @@ import battlecode.common.*;
 
 public class SoldierTower extends Caste {
     private static enum State {
-        OFF,
         SETUP,
         MINE,
         SPAWN,
         BUILD,
         YIELD
     }
+    private int RESOURCES;
+
     private final Builder builder;
+    private Attacker attacker;
     private final MapLocation myLoc; // Buildings can't move.
 
     private State state;
@@ -26,21 +28,28 @@ public class SoldierTower extends Caste {
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
 
-        builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD);
+        builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
+
+        RESOURCES = 400+(10000-Clock.getRoundNum())/10;
     }
 
     @SuppressWarnings("fallthrough")
     public void SM() {
+        MapLocation l;
+
         while(true) {
             flux++;
-
             try {
+                if(state != State.SETUP) {
+                    if((l = attacker.autoFire()) != null)
+                        nav.setDirection(myLoc.directionTo(l));
+                    else
+                        nav.setDirection(myRC.getDirection().opposite());
+                }
+
                 switch(state) {
                     case SETUP:
                         setup();
-                        break;
-                    case OFF:
-                        off();
                         break;
                     case MINE:
                         mine();
@@ -69,6 +78,8 @@ public class SoldierTower extends Caste {
     private void setup() throws GameActionException {
         switch(builder.doBuild()) {
             case DONE:
+                myRP.update();
+                attacker = new Attacker(myRP, false);
             case FAIL:
                 state = State.MINE;
             default:
@@ -82,21 +93,18 @@ public class SoldierTower extends Caste {
     }
 
     private void spawn() {
-        if(soldiers >= 3) {
-            state = State.OFF;
-            return;
-        }
+        if(soldiers < 3 || (myRC.getTeamResources() > RESOURCES && myRP.sensor.senseNearbyGameObjects(Robot.class).length < 10)) {
+            Direction d = Direction.NORTH;
+            for(int i = 0; i < 8; i++) {
+                MapLocation dest = myLoc.add(d);
+                if(myRP.builder.canBuild(Chassis.LIGHT, dest)) {
+                    builder.startBuild(true, 1.1, dest, Chassis.LIGHT, ComponentType.ANTENNA, ComponentType.SMG, ComponentType.SMG, ComponentType.RADAR);
+                    state = state.BUILD;
+                    break;
+                }
 
-        Direction d = Direction.NORTH;
-        for(int i = 0; i < 8; i++) {
-            MapLocation dest = myLoc.add(d);
-            if(myRP.builder.canBuild(Chassis.LIGHT, dest)) {
-                builder.startBuild(true, 1, dest, Chassis.LIGHT, ComponentType.ANTENNA, ComponentType.BLASTER, ComponentType.RADAR);
-                state = state.BUILD;
-                break;
+                d = d.rotateRight();
             }
-
-            d = d.rotateRight();
         }
     }
 
@@ -111,11 +119,5 @@ public class SoldierTower extends Caste {
             default:
                 break;
         }
-    }
-
-    private void off() {
-        soldiers = 0;
-        state = State.SPAWN;
-        myRC.turnOff();
     }
 }
