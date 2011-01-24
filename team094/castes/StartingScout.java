@@ -254,6 +254,7 @@ public class StartingScout extends Caste {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private void build() throws GameActionException {
         switch(builder.doBuild()) {
             case ACTIVE:

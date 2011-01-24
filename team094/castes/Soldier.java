@@ -33,23 +33,16 @@ public class Soldier extends Caste {
     public void SM() {
         while(true) {
             try {
-                //if(com.receive(msgMask)) {
-                //    nav.setDestination(com.getDestination(), 6);
-                //    target = com.getDestination();
-                //    state = State.GO;
-                //    com.send();
-                //}
-
                 switch(state) {
                     case FOLLOW:
                         follow();
                         break;
-                    case SPREAD:
-                        spread();
-                        break;
-                    case SEARCH:
-                        search();
-                        break;
+                    //case SPREAD:
+                    //    spread();
+                    //    break;
+                    //case SEARCH:
+                    //    search();
+                    //    break;
                     case GO:
                         go();
                         break;
@@ -66,6 +59,13 @@ public class Soldier extends Caste {
             myRC.yield();
         }
     }
+
+    /**
+     * Follow the closest robot if it is facing away from you.
+     *
+     * This code stalks robots on your team to keep them clumped.
+     * I could easily make it migrate more but then the robots get too far away from eachother and are easily picked off.
+     */
     private void follow() throws GameActionException {
         RobotInfo tmpRobotInfo, robotInfo = null;
         int tmpDistSq = 1000;
@@ -133,13 +133,15 @@ public class Soldier extends Caste {
                 nav.setDestination(myLoc.add(myRC.getDirection().opposite(), 100));
                 nav.bugNavigate(true);
                 return;
-            } else if ((dist = myLoc.distanceSquaredTo(robotInfo.location)) > 25) {
+            } else if ((dist = myLoc.distanceSquaredTo(robotInfo.location)) >= 16) {
                 following = true;
                 nav.move(true);
-            } else if (dist <= 25) {
+            } else if (dist < 16) {
                 following = true;
                 nav.move(false);
-            }// else nav.bugNavigate(true);
+            } //else {
+              //  nav.setDirection(myRC.getDirection().opposite());
+            //}
         }
     }
 
@@ -225,10 +227,12 @@ public class Soldier extends Caste {
             nav.bugNavigate(true);
             state = State.ATTACK;
         } else if(nav.bugNavigate(true)) {
-            timer = 0;
+            //timer = 0;
             //state = state.SEARCH;
             state = state.FOLLOW;
         }
+        com.receive();
+        com.send();
     }
 
     private void attack() throws GameActionException {
@@ -238,7 +242,7 @@ public class Soldier extends Caste {
                 nav.setDestination(target, 6);
                 state = state.GO;
             } else {
-                timer = 0;
+                //timer = 0;
                 //state = State.SEARCH;
                 state = State.FOLLOW;
             }

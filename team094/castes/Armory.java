@@ -135,7 +135,7 @@ public class Armory extends Caste {
     private void delay() {
         if(--cooldown <= 0) {
             if(units >= MAX_UNITS)
-                state = State.YIELD;
+                myRC.turnOff();
             else
                 state = State.IDLE;
         }
