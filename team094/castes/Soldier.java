@@ -68,9 +68,12 @@ public class Soldier extends Caste {
 
         // Gather info about your front
         for(Robot r: myRP.sensor.senseNearbyGameObjects(Robot.class)) {
-            MapLocation rl = myRP.sensor.senseLocationOf(r);
-            Direction rd = myLoc.directionTo(rl);
-            int dist = (int)Math.sqrt(rl.distanceSquaredTo(myLoc));
+            RobotInfo ri = myRP.sensor.senseRobotInfo(r);
+            if(ri.chassis != Chassis.LIGHT)
+                continue;
+
+            Direction rd = myLoc.directionTo(ri.location);
+            int dist = (int)Math.sqrt(ri.location.distanceSquaredTo(myLoc));
 
             if(dist >= 4)
                 dest = dest.add(rd.opposite(), dist-4);
@@ -84,10 +87,17 @@ public class Soldier extends Caste {
 
         // And about your back
         for(Robot r: myRP.sensor.senseNearbyGameObjects(Robot.class)) {
-            MapLocation rl = myRP.sensor.senseLocationOf(r);
-            Direction rd = rl.directionTo(myLoc);
+            RobotInfo ri = myRP.sensor.senseRobotInfo(r);
+            if(ri.chassis != Chassis.LIGHT)
+                continue;
 
-            dest = dest.add(rd, 5-(int)Math.sqrt(rl.distanceSquaredTo(myLoc)));
+            Direction rd = ri.location.directionTo(myLoc);
+            int dist = (int)Math.sqrt(ri.location.distanceSquaredTo(myLoc));
+
+            if(dist >= 4)
+                dest = dest.add(rd.opposite(), dist-4);
+            else
+                dest = dest.add(rd, 4-dist);
         }
         nav.setDirection(myRC.getDirection().opposite());
 

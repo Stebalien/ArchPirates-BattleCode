@@ -6,7 +6,7 @@ import battlecode.common.*;
 public class StartingMine extends Caste {
     private static enum State {
         OFF,
-        SETUP,
+        SHIELD,
         IDLE,
         BUILD,
         YIELD
@@ -19,16 +19,16 @@ public class StartingMine extends Caste {
 
     private State state;
     private int offCounter;
-    private boolean sentry;
+    private boolean sentry,
+                    shields;
 
     public StartingMine(RobotProperties rp){
         super(rp);
 
-        state = State.SETUP;
+        state = State.OFF;
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
 
-        builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD);
         sentry = false;
 
         RESOURCES = 500+(10000-Clock.getRoundNum())/2;
@@ -39,8 +39,8 @@ public class StartingMine extends Caste {
         while(true) {
             try {
                 switch(state) {
-                    case SETUP:
-                        setup();
+                    case SHIELD:
+                        shield();
                         break;
                     case OFF:
                         off();
@@ -66,9 +66,10 @@ public class StartingMine extends Caste {
     }
 
     @SuppressWarnings("fallthrough")
-    private void setup() throws GameActionException {
+    private void shield() throws GameActionException {
         switch(builder.doBuild()) {
             case DONE:
+                shields = true;
             case FAIL:
                 state = State.IDLE;
             default:
@@ -114,6 +115,12 @@ public class StartingMine extends Caste {
                     }
                 }
             }
+        }
+
+        if(!shields && myRC.getTeamResources() > 200) {
+            builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD);
+            state = state.SHIELD;
+            return;
         }
 
         if(++offCounter >= OFF_ROUNDS) {

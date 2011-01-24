@@ -6,6 +6,7 @@ import battlecode.common.*;
 public class SoldierTower extends Caste {
     private static enum State {
         SETUP,
+        EQUIP_TOWER,
         MINE,
         SPAWN,
         BUILD,
@@ -14,6 +15,7 @@ public class SoldierTower extends Caste {
     private int RESOURCES;
 
     private final Builder builder;
+    private final SensorController mySensor;
     private Attacker attacker;
     private final MapLocation myLoc; // Buildings can't move.
 
@@ -27,10 +29,11 @@ public class SoldierTower extends Caste {
         state = State.SETUP;
         builder = new Builder(rp);
         myLoc = myRC.getLocation();
+        mySensor = myRP.sensor;
 
         builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
 
-        RESOURCES = 400+(10000-Clock.getRoundNum())/10;
+        RESOURCES = 300+(10000-Clock.getRoundNum())/10;
     }
 
     @SuppressWarnings("fallthrough")
@@ -50,6 +53,9 @@ public class SoldierTower extends Caste {
                 switch(state) {
                     case SETUP:
                         setup();
+                        break;
+                    case EQUIP_TOWER:
+                        equip_tower();
                         break;
                     case MINE:
                         mine();
@@ -81,9 +87,35 @@ public class SoldierTower extends Caste {
                 myRP.update();
                 attacker = new Attacker(myRP, false);
             case FAIL:
+                Robot[] robots = mySensor.senseNearbyGameObjects(Robot.class);
+                for(Robot robot: robots) {
+                    RobotInfo r = mySensor.senseRobotInfo(robot);
+                    if(r.chassis == Chassis.BUILDING && !r.on && !myLoc.directionTo(r.location).isDiagonal()) {
+                        builder.startBuild(true, 1.2, r.location, RobotLevel.ON_GROUND,
+                                           ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.SHIELD,
+                                           ComponentType.SHIELD, ComponentType.SHIELD, ComponentType.RADAR,
+                                           ComponentType.SMG, ComponentType.SMG, ComponentType.SMG,
+                                           ComponentType.SMG, ComponentType.SMG, ComponentType.SMG,
+                                           ComponentType.SMG, ComponentType.SMG, ComponentType.SMG,
+                                           ComponentType.SMG, ComponentType.SMG, ComponentType.SMG);
+                        state = State.EQUIP_TOWER;
+                        return;
+                    }
+                }
                 state = State.MINE;
             default:
-            break;
+                break;
+        }
+    }
+
+    @SuppressWarnings("fallthrough")
+    private void equip_tower() throws GameActionException {
+        switch(builder.doBuild()) {
+            case DONE:
+            case FAIL:
+                state = State.MINE;
+            default:
+                break;
         }
     }
 
@@ -93,7 +125,7 @@ public class SoldierTower extends Caste {
     }
 
     private void spawn() {
-        if(soldiers < 3 || (myRC.getTeamResources() > RESOURCES && myRP.sensor.senseNearbyGameObjects(Robot.class).length < 10)) {
+        if(soldiers < 3 || (myRC.getTeamResources() > RESOURCES && mySensor.senseNearbyGameObjects(Robot.class).length < 10)) {
             Direction d = Direction.NORTH;
             for(int i = 0; i < 8; i++) {
                 MapLocation dest = myLoc.add(d);

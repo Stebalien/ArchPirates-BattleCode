@@ -154,7 +154,7 @@ public class StartingScout extends Caste {
                 ///////////////////////////////////////////////
                 ////// Remove this to keep scout alive ////////
                 ///////////////////////////////////////////////
-                myRC.suicide();
+                //myRC.suicide();
 
                 nav.setDestination(new MapLocation(0, 0));
                 state = State.FIND_WALL;
@@ -176,15 +176,41 @@ public class StartingScout extends Caste {
     }
 
     private void find_wall() throws GameActionException {
-        // Navigate towards 0,0, looking for map boundaries
-        nav.bugNavigate(false);
+        if(ti < 0) {
+            Mine[] mines = myRP.sensor.senseNearbyGameObjects(Mine.class);
+            for(Mine m: mines) {
+                MapLocation mLoc = m.getLocation();
+                if(ti < 9 && myRP.sensor.senseObjectAtLocation(mLoc, RobotLevel.ON_GROUND) == null) {
+                    targets[++ti] = m;
+                    if(wallLoc == null) {
+                        wallLoc = myRC.getLocation();
+                        wallDir = myRC.getDirection();
+                    }
+                    nav.setDestination(mLoc, 1.5);
+                }
+            }
+        }
 
-        // If the square in front is off Map, turn right and start following the wall
-        if(myRC.senseTerrainTile(myRC.getLocation().add(myRC.getDirection())) == TerrainTile.OFF_MAP) {
-            /* Generally bad form, but this is a special case where nothing more needs to be done */
-            myRC.yield();
 
-            state = State.SEARCH;
+        if(ti < 0) {
+            // Navigate towards 0,0, looking for map boundaries
+            nav.bugNavigate(false);
+
+            // If the square in front is off Map, turn right and start following the wall
+            if(myRC.senseTerrainTile(myRC.getLocation().add(myRC.getDirection())) == TerrainTile.OFF_MAP)
+                state = State.SEARCH;
+        } else if(nav.bugNavigate(false)) {
+            MapLocation mineLoc = targets[ti].getLocation();
+            MapLocation loc = myRC.getLocation();
+
+            if(mineLoc.equals(loc)) {
+                if(nav.canMoveBackward())
+                    nav.move(false);
+            } else {
+                builder.startBuild(true, 1.05, mineLoc, Chassis.BUILDING, ComponentType.RECYCLER);
+                builder.doBuild();
+                state = State.BUILD;
+            }
         }
     }
 

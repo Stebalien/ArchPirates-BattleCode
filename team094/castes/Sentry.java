@@ -102,7 +102,8 @@ public class Sentry extends Caste {
             return;
         }
 
-        if(nav.canMoveForward())
+        Direction cur = myRC.getDirection();
+        if(myRC.senseTerrainTile(myRC.getLocation().add(cur, 4)) != TerrainTile.OFF_MAP && nav.canMoveForward())
             nav.move(true);
         else
             nav.setDirection(myRC.getDirection().rotateRight().rotateRight());

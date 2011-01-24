@@ -17,8 +17,9 @@ public class Tower extends Caste {
     public Tower(RobotProperties rp){
         super(rp);
 
-        state = State.SETUP;
+        state = State.DEFEND;
         myLoc = myRC.getLocation();
+        attacker = new Attacker(rp, true);
     }
 
     @SuppressWarnings("fallthrough")
