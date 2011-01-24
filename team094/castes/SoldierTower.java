@@ -125,7 +125,8 @@ public class SoldierTower extends Caste {
     }
 
     private void spawn() {
-        if(soldiers < 3 || (myRC.getTeamResources() > RESOURCES && mySensor.senseNearbyGameObjects(Robot.class).length < 10)) {
+        double resources = myRC.getTeamResources();
+        if(soldiers < 3 || (resources > RESOURCES && mySensor.senseNearbyGameObjects(Robot.class).length < 10) || myRC.getHitpoints() < myRC.getMaxHp()/2) {
             Direction d = Direction.NORTH;
             for(int i = 0; i < 8; i++) {
                 MapLocation dest = myLoc.add(d);

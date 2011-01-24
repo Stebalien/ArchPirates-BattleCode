@@ -10,6 +10,7 @@ public class StartingScout extends Caste {
         FIND_WALL,
         SEARCH,
         BUILD,
+        BUILD_TOWER,
         YIELD
     }
     private State state;
@@ -17,9 +18,11 @@ public class StartingScout extends Caste {
     private final Builder builder;
 
     private Mine[] targets;
-    private int ti;
+    private int ti,
+                mines;
     private MapLocation wallLoc;
     private Direction wallDir;
+    private boolean tower;
 
     public StartingScout(RobotProperties rp){
         super(rp);
@@ -50,6 +53,9 @@ public class StartingScout extends Caste {
                         break;
                     case BUILD:
                         build();
+                        break;
+                    case BUILD_TOWER:
+                        build_tower();
                         break;
                     default:
                         yield();
@@ -189,6 +195,8 @@ public class StartingScout extends Caste {
                     nav.setDestination(mLoc, 1.5);
                 }
             }
+
+            tower = (ti > -1 && this.mines > 0);
         }
 
 
@@ -228,6 +236,8 @@ public class StartingScout extends Caste {
                     nav.setDestination(mLoc, 1.5);
                 }
             }
+
+            tower = (ti > -1 && this.mines > 0);
         }
 
         if(ti < 0) {
@@ -260,15 +270,44 @@ public class StartingScout extends Caste {
             case ACTIVE:
             case WAITING:
                 return;
-            case FAIL:
             case DONE:
-                state = State.SEARCH;
+                mines++;
+            case FAIL:
                 ti--;
-                if(ti > -1)
+                if(ti > -1) {
                     nav.setDestination(targets[ti].getLocation(), 1.9);
-                else
-                    nav.setDestination(new MapLocation(0, 0));
+                } else if(tower) {
+                    tower = false;
 
+                    Direction d = Direction.NORTH;
+                    MapLocation myLoc = myRC.getLocation();
+                    for(int i = 0; i < 8; i++, d = d.rotateRight()) {
+                        MapLocation dest = myLoc.add(d);
+                        if(myRP.builder.canBuild(Chassis.BUILDING, dest) && dest.isAdjacentTo(targets[0].getLocation()) && !dest.directionTo(targets[0].getLocation()).isDiagonal()) {
+                            builder.startBuild(false, 1.2, dest, Chassis.BUILDING);
+                            builder.doBuild();
+                            state = state.BUILD_TOWER;
+                            return;
+                        }
+                    }
+                } else {
+                    nav.setDestination(new MapLocation(0, 0));
+                    state = State.SEARCH;
+                }
+
+                break;
+        }
+    }
+
+    @SuppressWarnings("fallthrough")
+    private void build_tower() throws GameActionException {
+        switch(builder.doBuild()) {
+            case DONE:
+                mines = 0;
+            case FAIL:
+                state = State.SEARCH;
+                break;
+            default:
                 break;
         }
     }

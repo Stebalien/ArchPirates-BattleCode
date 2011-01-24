@@ -4,7 +4,8 @@ import team094.modules.*;
 import battlecode.common.*;
 
 public class Scout extends Caste {
-    private static int TIMEOUT = 150;
+    private static int TIMEOUT = 150,
+                       TURN_DELAY = 1;
     private static enum State {
         WANDER,
         BUILD,
@@ -15,12 +16,18 @@ public class Scout extends Caste {
 
     private final Builder builder;
     private Mine[] targets;
+    private MapLocation home;
     private int ti,
                 timeout,
+                turnTimer,
                 mines;
-    private double health;
+    private double health,
+                   circleDist;
     private int runCooldown = -1;
-    private boolean tower;
+    private boolean tower,
+                    circleLeft,
+                    circling,
+                    turned;
 
     public Scout(RobotProperties rp){
         super(rp);
@@ -29,8 +36,13 @@ public class Scout extends Caste {
         state = State.WANDER;
         builder = new Builder(rp);
         targets = new Mine[10];
+        home = myRC.getLocation();
+
+        circleDist = Math.abs((2500-Clock.getRoundNum())/150.0);
+        circleDist *= circleDist;
 
         ti = -1;
+        turnTimer = -1;
     }
 
     @SuppressWarnings("fallthrough")
@@ -78,6 +90,7 @@ public class Scout extends Caste {
             }
         } else if(runCooldown == 0) {
             nav.setDirection(myRC.getDirection().opposite());
+            circleLeft = !circleLeft;
             runCooldown--;
             health = tmp_health;
             return false;
@@ -104,10 +117,54 @@ public class Scout extends Caste {
 
         if(ti < 0) {
             Direction cur = myRC.getDirection();
-            if(myRC.senseTerrainTile(myRC.getLocation().add(cur, 2)) != TerrainTile.OFF_MAP  && nav.canMoveForward())
-                nav.move(true);
-            else
-                nav.setDirection(myRC.getDirection().rotateLeft().rotateLeft());
+            MapLocation loc = myRC.getLocation();
+            if(circling) {
+                Direction heading = loc.directionTo(home);
+                if(circleLeft)
+                    heading = heading.rotateRight().rotateRight();
+                else
+                    heading = heading.rotateLeft().rotateLeft();
+
+                if(cur == heading) {
+                    if(myRC.senseTerrainTile(loc.add(cur, 2)) == TerrainTile.OFF_MAP || !nav.canMoveForward()) {
+                        nav.setDirection(cur.opposite());
+                        circleLeft = !circleLeft;
+                    } else {
+                        nav.move(true);
+                    }
+                } else {
+                    if(turnTimer == -1) {
+                        turnTimer = TURN_DELAY;
+                        nav.move(true);
+                    } else if(turnTimer != 0) {
+                        nav.move(true);
+                        turnTimer--;
+                    } else {
+                        turnTimer = -1;
+                        nav.setDirection(heading);
+                    }
+                }
+            } else {
+                if(loc.distanceSquaredTo(home) >= circleDist) {
+                    circling = true;
+                    nav.rotate(true, 2);
+                } else {
+                    if(myRC.senseTerrainTile(loc.add(cur, 2)) == TerrainTile.OFF_MAP) {
+                        if(turned) {
+                            nav.setDirection(cur.opposite());
+                            turned = false;
+                        } else {
+                            nav.rotate(true, 2);
+                            turned = true;
+                        }
+                    } else {
+                        if(nav.canMoveForward())
+                            nav.move(true);
+                        else
+                            nav.setDirection(cur.opposite());
+                    }
+                }
+            }
         } else if(nav.bugNavigate(false)) {
             builder.startBuild(true, 1.05, targets[ti].getLocation(), Chassis.BUILDING, ComponentType.RECYCLER);
             timeout = 0;
