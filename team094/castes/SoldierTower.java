@@ -33,7 +33,7 @@ public class SoldierTower extends Caste {
 
         builder.startBuild(false, 1.1, myLoc, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
 
-        RESOURCES = 300+(10000-Clock.getRoundNum())/15;
+        RESOURCES = 300+(10000-Clock.getRoundNum())/10;
     }
 
     @SuppressWarnings("fallthrough")

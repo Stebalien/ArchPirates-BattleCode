@@ -99,10 +99,7 @@ public class Scout extends Caste {
                 }
             }
 
-            double resources = myRC.getTeamResources();
-            tower = (ti > -1 && resources > 500 && (this.mines > 0 || resources > 1000));
-            if(tower)
-                System.out.println("Building a tower!");
+            tower = (ti > -1 && this.mines > 0);
         }
 
         if(ti < 0) {
