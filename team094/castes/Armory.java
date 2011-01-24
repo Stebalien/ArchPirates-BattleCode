@@ -12,7 +12,7 @@ public class Armory extends Caste {
         YIELD
     }
     private static final int MAX_UNITS = 20,
-                             DELAY = 100;
+                             DELAY = 150;
     private State state;
 
     private final Builder builder;
