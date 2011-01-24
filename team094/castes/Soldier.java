@@ -5,6 +5,7 @@ import battlecode.common.*;
 
 public class Soldier extends Caste {
     private static enum State {
+        FOLLOW,
         SPREAD,
         SEARCH,
         GO,
@@ -15,13 +16,17 @@ public class Soldier extends Caste {
 
     private final Attacker attacker;
     private MapLocation target;
+    private Robot followed;
+    private boolean lost;
+    private SensorController sensor;
     private int msgMask,
                 timer;
 
     public Soldier(RobotProperties rp){
         super(rp);
-        state = State.SPREAD;
+        state = State.FOLLOW;
         attacker = new Attacker(rp, true);
+        sensor = rp.sensor;
 
         msgMask = Communicator.ATTACK;
     }
@@ -29,14 +34,17 @@ public class Soldier extends Caste {
     public void SM() {
         while(true) {
             try {
-                if(com.receive(msgMask)) {
-                    nav.setDestination(com.getDestination(), 6);
-                    target = com.getDestination();
-                    state = State.GO;
-                    com.send();
-                }
+                //if(com.receive(msgMask)) {
+                //    nav.setDestination(com.getDestination(), 6);
+                //    target = com.getDestination();
+                //    state = State.GO;
+                //    com.send();
+                //}
 
                 switch(state) {
+                    case FOLLOW:
+                        follow();
+                        break;
                     case SPREAD:
                         spread();
                         break;
@@ -57,6 +65,75 @@ public class Soldier extends Caste {
 
             //System.out.println(Clock.getBytecodeNum());
             myRC.yield();
+        }
+    }
+    private void follow() throws GameActionException {
+        RobotInfo tmpRobotInfo, robotInfo = null;
+        int tmpDistSq = 1000;
+        int minDistSq = 1000;
+        MapLocation l, myLoc = myRC.getLocation();
+        // Should I attack
+        if((l = attacker.autoFire()) != null) {
+            nav.setDestination(l, 6);
+            nav.bugNavigate(true);
+            state = State.ATTACK;
+            com.clear();
+            com.send(Communicator.ATTACK, attacker.rank, 5, myLoc);
+            return;
+        }
+
+        // I CAN HAZ MSG
+        if (com.receive(msgMask)) {
+            nav.setDestination(com.getDestination());
+            nav.bugNavigate(true);
+            state = State.GO;
+            com.send();
+            return;
+        }
+
+        // Where is everybody
+        for (Robot r : sensor.senseNearbyGameObjects(Robot.class)) {
+            if (r.getTeam() == myRP.myTeam) {
+                tmpRobotInfo = sensor.senseRobotInfo(r);
+                if (tmpRobotInfo.chassis == Chassis.LIGHT
+                   && (tmpDistSq = myLoc.distanceSquaredTo(tmpRobotInfo.location)) < minDistSq)
+                {
+                    minDistSq = tmpDistSq;
+                    robotInfo = tmpRobotInfo;
+                }
+            }
+        }
+
+        // Didn't find anyone
+        if (robotInfo == null) {
+
+            // Lost?
+            if (lost) {
+                if (!nav.bugNavigate(false)) {
+                    nav.setDestination(myLoc.add(myRC.getDirection(), 100));
+                    nav.bugNavigate(false);
+                }
+                return;
+            }
+
+            // Maybe they are behind me.
+            lost = true;
+            nav.setDirection(myRC.getDirection().opposite());
+            return;
+        } else {
+            lost = false; // Not lost.
+            // Don't follow if they are facing me.
+            Direction dir = robotInfo.location.directionTo(myLoc);
+            int dist;
+            if (dir == robotInfo.direction || dir == robotInfo.direction.rotateRight() || dir == robotInfo.direction.rotateLeft()) {
+                lost = true;
+                nav.setDestination(myLoc.add(myRC.getDirection().opposite(), 100));
+                nav.bugNavigate(true);
+            } else if ((dist = myLoc.distanceSquaredTo(robotInfo.location)) > 25) {
+                nav.move(true);
+            } else if (dist < 16) {
+                nav.move(false);
+            } else nav.bugNavigate(true);
         }
     }
 
@@ -83,6 +160,8 @@ public class Soldier extends Caste {
         nav.setDirection(myRC.getDirection().opposite());
 
         attacker.autoFire();
+        com.receive();
+        com.send();
         myRC.yield();
 
         // And about your back
@@ -141,7 +220,8 @@ public class Soldier extends Caste {
             state = State.ATTACK;
         } else if(nav.bugNavigate(true)) {
             timer = 0;
-            state = state.SEARCH;
+            //state = state.SEARCH;
+            state = state.FOLLOW;
         }
     }
 
@@ -153,7 +233,8 @@ public class Soldier extends Caste {
                 state = state.GO;
             } else {
                 timer = 0;
-                state = State.SEARCH;
+                //state = State.SEARCH;
+                state = State.FOLLOW;
             }
         } else {
             nav.setDestination(l);

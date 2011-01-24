@@ -85,7 +85,7 @@ public class Miner extends Caste {
                         break;
                     case BUILDING:
                         if(scouts > 0 && myLoc.isAdjacentTo(ri.location) && !myLoc.directionTo(ri.location).isDiagonal() && myRP.sensor.senseObjectAtLocation(ri.location, RobotLevel.MINE) == null) {
-                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SMG, ComponentType.SMG);
+                            builder.startBuild(true, 1.2, ri.location, RobotLevel.ON_GROUND, ComponentType.RADAR, ComponentType.SHIELD, ComponentType.SMG);
                             builder.doBuild();
                             state = State.BUILD;
                             return;
